@@ -112,8 +112,12 @@ function App() {
   }, []);
 
   const handleMapClick = useCallback(() => {
-    closeFaceplate();
-  }, [closeFaceplate]);
+    if (viewMode === 'counties') {
+      backToProvinces();
+    } else {
+      closeFaceplate();
+    }
+  }, [viewMode, backToProvinces, closeFaceplate]);
 
   const handleTileToggle = useCallback(() => {
     setActiveTile(prev => {

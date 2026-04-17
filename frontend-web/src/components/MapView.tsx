@@ -51,6 +51,7 @@ const MapView: FC<MapViewProps> = ({
   const countyLayerRef = useRef<L.GeoJSON | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const attributionRef = useRef<L.Control.Attribution | null>(null);
+  const featureClickedRef = useRef(false);
 
   // Stable refs for callbacks so GeoJSON event handlers always see current values
   const activeProvinceRef = useRef(activeProvince);
@@ -84,15 +85,13 @@ const MapView: FC<MapViewProps> = ({
       onZoomChange(map.getZoom());
     });
 
-    map.on('click', (e: L.LeafletMouseEvent) => {
-      const target = e.originalEvent.target as HTMLElement;
-      if (
-        target.classList.contains('leaflet-container') ||
-        target.classList.contains('leaflet-tile') ||
-        target.classList.contains('leaflet-pane')
-      ) {
-        onMapClick();
+    map.on('click', () => {
+      // Skip if a feature (province/county) was just clicked
+      if (featureClickedRef.current) {
+        featureClickedRef.current = false;
+        return;
       }
+      onMapClick();
     });
 
     mapRef.current = map;
@@ -191,6 +190,7 @@ const MapView: FC<MapViewProps> = ({
             }
           },
           click: (e: L.LeafletMouseEvent) => {
+            featureClickedRef.current = true;
             const bounds = (e.target as L.Polygon).getBounds();
             onProvinceClickRef.current(nazwa, agg, counties, bounds);
             L.DomEvent.stopPropagation(e as unknown as Event);
@@ -258,6 +258,7 @@ const MapView: FC<MapViewProps> = ({
             }
           },
           click: (e: L.LeafletMouseEvent) => {
+            featureClickedRef.current = true;
             onCountyClickRef.current(nazwa, d, activeProvinceRef.current!);
             L.DomEvent.stopPropagation(e as unknown as Event);
           },
