@@ -87,8 +87,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function initMap() {
-    map = L.map('map', { center: [51.9, 19.1], zoom: 6, minZoom: 3, maxZoom: 18, zoomControl: true });
+    // Disable Leaflet's default prefix and create the map without the built-in attribution
+    map = L.map('map', { center: [51.9, 19.1], zoom: 6, minZoom: 3, maxZoom: 18, zoomControl: true, attributionControl: false });
+
+    // Add a custom, emoji-free attribution control (shows OSM contributors and tile provider)
+    window.customAttribution = L.control.attribution({ prefix: '' }).addTo(map);
+
     setTileLayer('dark');
+
     map.on('zoomend', () => { document.getElementById('zoom-level').textContent = map.getZoom(); });
 }
 
@@ -98,6 +104,17 @@ function setTileLayer(name) {
     if (currentTileLayer) map.removeLayer(currentTileLayer);
     currentTileLayer = L.tileLayer(tile.url, { attribution: tile.attribution, maxZoom: 19, subdomains: 'abcd' }).addTo(map);
     activeTile = name;
+    // Update custom attribution text to avoid flags/emojis and show OSM contributors
+    try {
+        const providerText = (tile.attribution || '').replace(/&copy;/g, '©').replace(/<[^>]*>/g, '').trim();
+        const osmText = '© OpenStreetMap contributors';
+        const final = providerText ? `${osmText} · ${providerText}` : osmText;
+        if (window.customAttribution && window.customAttribution._container) {
+            window.customAttribution._container.innerHTML = final;
+        }
+    } catch (e) {
+        // ignore
+    }
     if (countyLayer) countyLayer.bringToFront();
     if (provinceLayer) provinceLayer.bringToFront();
 }
@@ -256,7 +273,15 @@ function selectCounty(nazwa, layer) {
 
     // Highlight
     if (layer) {
-        layer.setStyle({ fillColor: '#6366f1', fillOpacity: 0.8, color: '#a78bfa', weight: 3 });
+        // Keep the existing fill (background) color; only change the outline to a consistent style
+        layer.setStyle({
+            color: '#ff009d',
+            weight: 10,
+            opacity: 1,
+            dashArray: '',
+            lineCap: 'round',
+            lineJoin: 'round'
+        });
         layer.bringToFront();
         map.flyToBounds(layer.getBounds(), { padding: [40, 40], maxZoom: 11, duration: 0.6 });
     }
