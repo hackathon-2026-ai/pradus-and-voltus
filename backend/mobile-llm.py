@@ -1,9 +1,9 @@
 import ollama
 import requests
 import json
+import pandas as pd
 
-
-def run_ollama_via_api(prompt: str, model: str = "gemma4:e2b"):
+def run_pradus(prompt: str, model: str = "gemma4:e2b"):
     try:
         url = "http://localhost:11434/api/chat"
 
@@ -34,12 +34,12 @@ def run_ollama_via_api(prompt: str, model: str = "gemma4:e2b"):
     except Exception as e:
         return f"Wystąpił błąd: {e}"
 
-'''
+
 if __name__ == "__main__":
     # Testujemy Prądusia!
-    user_prompt = "Kiedy jutro najlepiej włączyć pralkę i naładować auto, żeby było tanio?"
+    user_prompt = "Witaj, ile zapłacę jutro za prąd? Chciałbym wiedzieć ile kosztuje taryfa"
 
     print("Łączę z Prądusiem...\n")
-    output = run_ollama_via_api(user_prompt)
+    output = run_pradus(user_prompt)
     print("Prąduś godo:\n", output)
-'''
+
