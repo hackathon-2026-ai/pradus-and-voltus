@@ -2,6 +2,8 @@ from flask import Flask
 from app.config import Config
 from app.extensions import db
 from app.routes.health import health_bp
+from app.routes.users import users_bp
+
 
 def create_app():
     app = Flask(__name__)
@@ -10,5 +12,6 @@ def create_app():
     db.init_app(app)
 
     app.register_blueprint(health_bp, url_prefix="/api")
+    app.register_blueprint(users_bp, url_prefix="/api")
 
     return app
