@@ -14,6 +14,7 @@ import {
   type EnergyData,
   type CountyFeature,
 } from './data/energyUtils';
+import type { EnergyFacility } from './data/energyFacilities';
 
 function App() {
   // ===== STATE =====
@@ -37,6 +38,9 @@ function App() {
   const [faceplateData, setFaceplateData] = useState<EnergyData | null>(null);
   const [faceplateCounties, setFaceplateCounties] = useState<CountyFeature[]>([]);
   const [faceplateShowCountyList, setFaceplateShowCountyList] = useState(true);
+
+  // Facility state
+  const [selectedFacility, setSelectedFacility] = useState<EnergyFacility | null>(null);
 
   // ===== LOAD DATA =====
   useEffect(() => {
@@ -70,8 +74,8 @@ function App() {
     setActiveProvince(provinceName);
     setActiveCounty(null);
     setViewMode('counties');
+    setSelectedFacility(null);
 
-    // Show faceplate with province aggregated data
     setFaceplateTitle(pData.nameEN);
     setFaceplateSubtitle(`Province · ${counties.length} counties`);
     setFaceplateData(data);
@@ -82,6 +86,7 @@ function App() {
 
   const handleCountyClick = useCallback((countyName: string, data: EnergyData, provinceName: string) => {
     setActiveCounty(countyName);
+    setSelectedFacility(null);
     const displayName = countyName.replace('powiat ', '');
     const pData = PROVINCE_DATA[provinceName];
     setFaceplateTitle(displayName);
@@ -98,26 +103,61 @@ function App() {
     handleCountyClick(countyName, d, activeProvince);
   }, [activeProvince, handleCountyClick]);
 
+  const handleFacilityClick = useCallback((facility: EnergyFacility) => {
+    setSelectedFacility(facility);
+    setActiveCounty(null);
+    setFaceplateVisible(true);
+  }, []);
+
   const closeFaceplate = useCallback(() => {
     setFaceplateVisible(false);
     setActiveCounty(null);
+    setSelectedFacility(null);
   }, []);
 
   const backToProvinces = useCallback(() => {
     setViewMode('provinces');
     setActiveProvince(null);
     setActiveCounty(null);
+    setSelectedFacility(null);
     setFaceplateVisible(false);
     setFlyTrigger(t => t + 1);
   }, []);
 
+  const handleBackFromFacility = useCallback(() => {
+    if (selectedFacility) {
+      // Go back from facility to whatever view we were in
+      setSelectedFacility(null);
+      if (activeProvince) {
+        // Re-show province data
+        const counties = getCountiesForProvince(countyGeoData, activeProvince);
+        const agg = aggregateCountyData(counties);
+        const pData = PROVINCE_DATA[activeProvince];
+        if (pData) {
+          setFaceplateTitle(pData.nameEN);
+          setFaceplateSubtitle(`Province · ${counties.length} counties`);
+          setFaceplateData(agg);
+          setFaceplateCounties(counties);
+          setFaceplateShowCountyList(true);
+          setFaceplateVisible(true);
+        }
+      } else {
+        setFaceplateVisible(false);
+      }
+    } else {
+      backToProvinces();
+    }
+  }, [selectedFacility, activeProvince, countyGeoData, backToProvinces]);
+
   const handleMapClick = useCallback(() => {
-    if (viewMode === 'counties') {
+    if (selectedFacility) {
+      closeFaceplate();
+    } else if (viewMode === 'counties') {
       backToProvinces();
     } else {
       closeFaceplate();
     }
-  }, [viewMode, backToProvinces, closeFaceplate]);
+  }, [viewMode, selectedFacility, backToProvinces, closeFaceplate]);
 
   const handleTileToggle = useCallback(() => {
     setActiveTile(prev => {
@@ -142,7 +182,9 @@ function App() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (viewMode === 'counties') {
+        if (selectedFacility) {
+          handleBackFromFacility();
+        } else if (viewMode === 'counties') {
           backToProvinces();
         } else {
           closeFaceplate();
@@ -151,11 +193,11 @@ function App() {
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [viewMode, backToProvinces, closeFaceplate]);
+  }, [viewMode, selectedFacility, backToProvinces, closeFaceplate, handleBackFromFacility]);
 
-  // When coming back to provinces and faceplate is open for a county, refresh province data
+  // Refresh province data when switching back
   useEffect(() => {
-    if (viewMode === 'provinces' && faceplateVisible && activeProvince) {
+    if (viewMode === 'provinces' && faceplateVisible && activeProvince && !selectedFacility) {
       const counties = getCountiesForProvince(countyGeoData, activeProvince);
       const agg = aggregateCountyData(counties);
       const pData = PROVINCE_DATA[activeProvince];
@@ -167,7 +209,7 @@ function App() {
         setFaceplateShowCountyList(true);
       }
     }
-  }, [viewMode, faceplateVisible, activeProvince, countyGeoData]);
+  }, [viewMode, faceplateVisible, activeProvince, countyGeoData, selectedFacility]);
 
   return (
     <div id="app">
@@ -187,10 +229,12 @@ function App() {
             onZoomChange={setZoomLevel}
             onProvinceClick={handleProvinceClick}
             onCountyClick={handleCountyClick}
+            onFacilityClick={handleFacilityClick}
             onMapClick={handleMapClick}
             viewMode={viewMode}
             activeProvince={activeProvince}
             activeCounty={activeCounty}
+            activeFacilityId={selectedFacility?.id ?? null}
             flyToPolandTrigger={flyTrigger}
             searchQuery={searchQuery}
           />
@@ -203,9 +247,10 @@ function App() {
             viewMode={viewMode}
             showCountyList={faceplateShowCountyList}
             onClose={closeFaceplate}
-            onBack={backToProvinces}
+            onBack={handleBackFromFacility}
             onCountyClick={handleCountyClickFromList}
             activeCounty={activeCounty}
+            facility={selectedFacility}
           />
         </div>
       </main>

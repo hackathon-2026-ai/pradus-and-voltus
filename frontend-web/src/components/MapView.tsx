@@ -13,8 +13,35 @@ import {
   type EnergyData,
   type CountyFeature,
 } from '../data/energyUtils';
+import {
+  ENERGY_FACILITIES,
+  FACILITY_TYPE_CONFIG,
+  type EnergyFacility,
+} from '../data/energyFacilities';
 
 export type ViewMode = 'provinces' | 'counties';
+
+// ===== SVG ICONS FOR EACH FACILITY TYPE =====
+function getFacilityIconSVG(type: string) {
+  switch (type) {
+    case 'wind':
+      return '<img src="/wind.svg" alt="Wiatrak" width="24" height="24" />'; // <--- TUTAJ POPRAWKA
+    case 'solar':
+      return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>';
+    case 'coal':
+      return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="white" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="1"/><path d="M8 10V6a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v4"/><path d="M16 10V4"/><path d="M16 4c0 0 2-1 2 1"/></svg>';
+    case 'hydro':
+      return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="white" stroke-width="2"><path d="M2 12c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/><path d="M2 18c2-3 4-3 6 0s4 3 6 0 4-3 6 0"/><path d="M12 2v6"/><path d="M9 5l3 3 3-3"/></svg>';
+    case 'storage':
+      return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="white" stroke-width="2"><rect x="6" y="4" width="12" height="16" rx="2"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/><line x1="6" y1="10" x2="18" y2="10"/><path d="M10 13l2 2 2-2"/></svg>';
+    case 'biomass':
+      return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="white" stroke-width="2"><path d="M12 22c-4-4-8-7-8-12a8 8 0 0 1 16 0c0 5-4 8-8 12z"/><path d="M12 12c-2-2-2-5 0-7"/><path d="M12 12c2-2 2-5 0-7"/></svg>';
+    case 'house':
+      return '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="white" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>';
+    default:
+      return '<svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="6" fill="white"/></svg>';
+  }
+}
 
 interface MapViewProps {
   activeTile: string;
@@ -23,10 +50,12 @@ interface MapViewProps {
   onZoomChange: (zoom: number) => void;
   onProvinceClick: (provinceName: string, data: EnergyData, counties: CountyFeature[], bounds: L.LatLngBounds) => void;
   onCountyClick: (countyName: string, data: EnergyData, provinceName: string) => void;
+  onFacilityClick: (facility: EnergyFacility) => void;
   onMapClick: () => void;
   viewMode: ViewMode;
   activeProvince: string | null;
   activeCounty: string | null;
+  activeFacilityId: string | null;
   flyToPolandTrigger: number;
   searchQuery: string;
 }
@@ -38,10 +67,12 @@ const MapView: FC<MapViewProps> = ({
   onZoomChange,
   onProvinceClick,
   onCountyClick,
+  onFacilityClick,
   onMapClick,
   viewMode,
   activeProvince,
   activeCounty,
+  activeFacilityId,
   flyToPolandTrigger,
   searchQuery,
 }) => {
@@ -49,6 +80,7 @@ const MapView: FC<MapViewProps> = ({
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const provinceLayerRef = useRef<L.GeoJSON | null>(null);
   const countyLayerRef = useRef<L.GeoJSON | null>(null);
+  const facilityMarkersRef = useRef<L.Marker[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const attributionRef = useRef<L.Control.Attribution | null>(null);
   const featureClickedRef = useRef(false);
@@ -62,6 +94,8 @@ const MapView: FC<MapViewProps> = ({
   onProvinceClickRef.current = onProvinceClick;
   const onCountyClickRef = useRef(onCountyClick);
   onCountyClickRef.current = onCountyClick;
+  const onFacilityClickRef = useRef(onFacilityClick);
+  onFacilityClickRef.current = onFacilityClick;
   const countyGeoDataRef = useRef(countyGeoData);
   countyGeoDataRef.current = countyGeoData;
 
@@ -86,7 +120,6 @@ const MapView: FC<MapViewProps> = ({
     });
 
     map.on('click', () => {
-      // Skip if a feature (province/county) was just clicked
       if (featureClickedRef.current) {
         featureClickedRef.current = false;
         return;
@@ -116,7 +149,6 @@ const MapView: FC<MapViewProps> = ({
       subdomains: 'abcd',
     }).addTo(map);
 
-    // Update attribution
     try {
       const providerText = (tile.attribution || '').replace(/&copy;/g, '©').replace(/<[^>]*>/g, '').trim();
       const osmText = '© OpenStreetMap contributors';
@@ -141,7 +173,6 @@ const MapView: FC<MapViewProps> = ({
     if (!map || !provinceGeoData) return;
     if (viewMode !== 'provinces') return;
 
-    // Remove old layers
     if (provinceLayerRef.current) {
       map.removeLayer(provinceLayerRef.current);
       provinceLayerRef.current = null;
@@ -171,11 +202,22 @@ const MapView: FC<MapViewProps> = ({
         const counties = getCountiesForProvince(countyGeoDataRef.current, nazwa);
         const agg = aggregateCountyData(counties);
         const load = Math.round((agg.usageMW / agg.capacityMW) * 100);
-        const tip = d
-          ? `⚡ ${d.nameEN} — ${Math.round(agg.usageMW)} / ${Math.round(agg.capacityMW)} MW (${load}%) — ${counties.length} counties`
-          : nazwa;
+        const loadColor = load > 80 ? '#ef4444' : load > 65 ? '#f59e0b' : load > 50 ? '#3b82f6' : '#22c55e';
+        const tip = d ? `
+          <div class="tt-card">
+            <div class="tt-name">${d.nameEN}</div>
+            <div class="tt-sub">${d.capital} · ${counties.length} counties</div>
+            <div class="tt-bar-wrap"><div class="tt-bar" style="width:${load}%;background:${loadColor}"></div></div>
+            <div class="tt-stats">
+              <div class="tt-stat"><span class="tt-stat-val">${Math.round(agg.usageMW)}</span><span class="tt-stat-lbl">MW used</span></div>
+              <div class="tt-stat"><span class="tt-stat-val">${Math.round(agg.capacityMW)}</span><span class="tt-stat-lbl">MW cap</span></div>
+              <div class="tt-stat"><span class="tt-stat-val" style="color:${loadColor}">${load}%</span><span class="tt-stat-lbl">load</span></div>
+              <div class="tt-stat"><span class="tt-stat-val">${agg.renewableShare}%</span><span class="tt-stat-lbl">green</span></div>
+            </div>
+          </div>
+        ` : nazwa;
 
-        featureLayer.bindTooltip(tip, { sticky: true, className: 'region-tooltip', direction: 'top', offset: [0, -10] });
+        featureLayer.bindTooltip(tip, { sticky: true, className: 'region-tooltip', direction: 'top', offset: [0, -14] });
 
         featureLayer.on({
           mouseover: (e: L.LeafletMouseEvent) => {
@@ -207,12 +249,10 @@ const MapView: FC<MapViewProps> = ({
     const map = mapRef.current;
     if (!map || viewMode !== 'counties' || !activeProvince || !countyGeoData) return;
 
-    // Remove province layer
     if (provinceLayerRef.current) {
       map.removeLayer(provinceLayerRef.current);
       provinceLayerRef.current = null;
     }
-    // Remove old county layer
     if (countyLayerRef.current) {
       map.removeLayer(countyLayerRef.current);
       countyLayerRef.current = null;
@@ -240,9 +280,22 @@ const MapView: FC<MapViewProps> = ({
         const d = generateCountyEnergy(nazwa);
         const load = Math.round((d.usageMW / d.capacityMW) * 100);
         const displayName = nazwa.replace('powiat ', '');
+        const loadColor = load > 80 ? '#ef4444' : load > 65 ? '#f59e0b' : load > 50 ? '#3b82f6' : '#22c55e';
 
-        featureLayer.bindTooltip(`${displayName} — ${d.usageMW} / ${d.capacityMW} MW (${load}%)`, {
-          sticky: true, className: 'region-tooltip', direction: 'top', offset: [0, -10],
+        const tip = `
+          <div class="tt-card">
+            <div class="tt-name">${displayName}</div>
+            <div class="tt-bar-wrap"><div class="tt-bar" style="width:${load}%;background:${loadColor}"></div></div>
+            <div class="tt-stats">
+              <div class="tt-stat"><span class="tt-stat-val">${d.usageMW}</span><span class="tt-stat-lbl">MW used</span></div>
+              <div class="tt-stat"><span class="tt-stat-val">${d.capacityMW}</span><span class="tt-stat-lbl">MW cap</span></div>
+              <div class="tt-stat"><span class="tt-stat-val" style="color:${loadColor}">${load}%</span><span class="tt-stat-lbl">load</span></div>
+            </div>
+          </div>
+        `;
+
+        featureLayer.bindTooltip(tip, {
+          sticky: true, className: 'region-tooltip', direction: 'top', offset: [0, -14],
         });
 
         featureLayer.on({
@@ -267,8 +320,6 @@ const MapView: FC<MapViewProps> = ({
     }).addTo(map);
 
     countyLayerRef.current = layer;
-
-    // Fly to county bounds
     map.flyToBounds(layer.getBounds(), { padding: [60, 60], maxZoom: 9, duration: 0.8 });
   }, [viewMode, activeProvince, countyGeoData]);
 
@@ -277,14 +328,12 @@ const MapView: FC<MapViewProps> = ({
     const map = mapRef.current;
     if (!map || !countyLayerRef.current) return;
 
-    // Reset all county styles first
     countyLayerRef.current.eachLayer(l => {
       countyLayerRef.current!.resetStyle(l as L.Path);
     });
 
     if (!activeCounty) return;
 
-    // Find and highlight the selected county
     countyLayerRef.current.eachLayer(l => {
       const geoLayer = l as L.GeoJSON & { feature?: GeoJSON.Feature };
       if (geoLayer.feature?.properties?.nazwa === activeCounty) {
@@ -301,6 +350,55 @@ const MapView: FC<MapViewProps> = ({
       }
     });
   }, [activeCounty]);
+
+  // ===== FACILITY MARKERS =====
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // Clear old markers
+    facilityMarkersRef.current.forEach(m => map.removeLayer(m));
+    facilityMarkersRef.current = [];
+
+    // Determine which facilities to show
+    const facilitiesToShow = viewMode === 'counties' && activeProvince
+      ? ENERGY_FACILITIES.filter(f => f.province === activeProvince)
+      : ENERGY_FACILITIES;
+
+    facilitiesToShow.forEach((facility, idx) => {
+      const config = FACILITY_TYPE_CONFIG[facility.type];
+      const isActive = activeFacilityId === facility.id;
+
+      const html = `
+        <div class="facility-pin type-${facility.type}${isActive ? ' active' : ''}" style="animation-delay: ${idx * 0.05}s" data-facility-id="${facility.id}">
+          <div class="facility-pin-icon pin-anim-${facility.type}">
+            ${getFacilityIconSVG(facility.type)}
+          </div>
+          <div class="facility-label">
+            <div>${facility.name}</div>
+            <div class="facility-label-type">${config.label}${facility.capacityMW > 0 ? ' · ' + facility.capacityMW + ' MW' : ''}</div>
+          </div>
+        </div>
+      `;
+
+      const icon = L.divIcon({
+        html,
+        className: 'facility-marker-icon',
+        iconSize: [44, 44],
+        iconAnchor: [22, 44],
+      });
+
+      const marker = L.marker([facility.lat, facility.lng], { icon }).addTo(map);
+
+      marker.on('click', (e: L.LeafletMouseEvent) => {
+        featureClickedRef.current = true;
+        onFacilityClickRef.current(facility);
+        L.DomEvent.stopPropagation(e as unknown as Event);
+      });
+
+      facilityMarkersRef.current.push(marker);
+    });
+  }, [viewMode, activeProvince, activeFacilityId]);
 
   // ===== FLY TO POLAND =====
   useEffect(() => {
@@ -337,7 +435,20 @@ const MapView: FC<MapViewProps> = ({
     });
   }, [searchQuery, viewMode]);
 
-  return <div id="map" className="map-container" ref={containerRef}></div>;
+  return (
+    <>
+      <div id="map" className="map-container" ref={containerRef}></div>
+      {/* Map Legend */}
+      <div className="map-legend">
+        {Object.entries(FACILITY_TYPE_CONFIG).map(([key, config]) => (
+          <div key={key} className="legend-item">
+            <span className="legend-dot" style={{ background: config.color }}></span>
+            <span>{config.label}</span>
+          </div>
+        ))}
+      </div>
+    </>
+  );
 };
 
 export default MapView;
