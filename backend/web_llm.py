@@ -2,12 +2,7 @@ import requests
 import pandas as pd
 import json
 import os
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(BASE_DIR, "..", "Demo-Dataset",
-                         "Rynkowa cena energii elektrycznej (RCE) 2026-04-13 - 2026-04-18.xlsx")
-
-DATA_PATH_2 = os.path.join(BASE_DIR, "..", "Demo-Dataset", "electricity_production_entsoe.csv")
+from config import DATA_PATH, DATA_PATH_2
 
 
 def get_data_json(
@@ -76,7 +71,8 @@ def run_voltus_api(user_prompt: str, model: str = "gemma4:e2b"):
         return {"status": "error", "message": str(e)}
 
 
+'''
 if __name__ == "__main__":
     result = run_voltus_api("Zrób analizę na najbliższe 24h.")
     # Wyświetlamy sformatowany JSON
-    print(json.dumps(result, indent=4, ensure_ascii=False))
+    print(json.dumps(result, indent=4, ensure_ascii=False))'''

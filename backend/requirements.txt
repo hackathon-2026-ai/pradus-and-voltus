@@ -7,3 +7,4 @@ ollama
 requests
 json
 matplotlib
+fastapi
