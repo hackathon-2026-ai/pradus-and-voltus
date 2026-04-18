@@ -4,8 +4,9 @@ import TopBar from './components/TopBar';
 import MapView, { type ViewMode } from './components/MapView';
 import Faceplate from './components/Faceplate';
 import ChatPanel from './components/ChatPanel';
-import { TILE_ORDER } from './data/tileLayers';
 import { PROVINCE_DATA } from './data/provinceData';
+import { useTranslation } from './i18n/LanguageContext';
+import { provinceNames } from './i18n/translations';
 import {
   generateCountyEnergy,
   getCountiesForProvince,
@@ -18,6 +19,7 @@ import {
 import type { EnergyFacility } from './data/energyFacilities';
 
 function App() {
+  const { t, language } = useTranslation();
   // ===== STATE =====
   const [viewMode, setViewMode] = useState<ViewMode>('provinces');
   const [activeProvince, setActiveProvince] = useState<string | null>(null);
@@ -117,13 +119,13 @@ function App() {
     setViewMode('counties');
     setSelectedFacility(null);
 
-    setFaceplateTitle(pData.nameEN);
-    setFaceplateSubtitle(`Province · ${counties.length} counties`);
+    setFaceplateTitle(provinceNames[provinceName]?.[language] ?? pData.nameEN);
+    setFaceplateSubtitle(`${t('app.province')} · ${counties.length} ${t('map.counties')}`);
     setFaceplateData(data);
     setFaceplateCounties(counties);
     setFaceplateShowCountyList(true);
     setFaceplateVisible(true);
-  }, []);
+  }, [language, t]);
 
   const handleCountyClick = useCallback((countyName: string, data: EnergyData, provinceName: string) => {
     setActiveCounty(countyName);
@@ -131,12 +133,12 @@ function App() {
     const displayName = countyName.replace('powiat ', '');
     const pData = PROVINCE_DATA[provinceName];
     setFaceplateTitle(displayName);
-    setFaceplateSubtitle(`County · ${pData ? pData.nameEN : ''}`);
+    setFaceplateSubtitle(`${t('app.county')} · ${pData ? (provinceNames[provinceName]?.[language] ?? pData.nameEN) : ''}`);
     setFaceplateData(data);
     setFaceplateCounties([]);
     setFaceplateShowCountyList(false);
     setFaceplateVisible(true);
-  }, []);
+  }, [language, t]);
 
   const handleCountyClickFromList = useCallback((countyName: string) => {
     if (!activeProvince) return;
@@ -175,8 +177,8 @@ function App() {
         const agg = aggregateCountyData(counties);
         const pData = PROVINCE_DATA[activeProvince];
         if (pData) {
-          setFaceplateTitle(pData.nameEN);
-          setFaceplateSubtitle(`Province · ${counties.length} counties`);
+          setFaceplateTitle(provinceNames[activeProvince]?.[language] ?? pData.nameEN);
+          setFaceplateSubtitle(`${t('app.province')} · ${counties.length} ${t('map.counties')}`);
           setFaceplateData(agg);
           setFaceplateCounties(counties);
           setFaceplateShowCountyList(true);
@@ -188,7 +190,7 @@ function App() {
     } else {
       backToProvinces();
     }
-  }, [selectedFacility, activeProvince, countyGeoData, backToProvinces]);
+  }, [selectedFacility, activeProvince, countyGeoData, backToProvinces, language, t]);
 
   const handleMapClick = useCallback(() => {
     if (selectedFacility) {
@@ -244,14 +246,14 @@ function App() {
       const agg = aggregateCountyData(counties);
       const pData = PROVINCE_DATA[activeProvince];
       if (pData) {
-        setFaceplateTitle(pData.nameEN);
-        setFaceplateSubtitle(`Province · ${counties.length} counties`);
+        setFaceplateTitle(provinceNames[activeProvince]?.[language] ?? pData.nameEN);
+        setFaceplateSubtitle(`${t('app.province')} · ${counties.length} ${t('map.counties')}`);
         setFaceplateData(agg);
         setFaceplateCounties(counties);
         setFaceplateShowCountyList(true);
       }
     }
-  }, [viewMode, faceplateVisible, activeProvince, countyGeoData, selectedFacility]);
+  }, [viewMode, faceplateVisible, activeProvince, countyGeoData, selectedFacility, language, t]);
 
   return (
     <div id="app">

@@ -1,4 +1,5 @@
 import { type FC, useEffect, useRef } from 'react';
+import { useTranslation } from '../i18n/LanguageContext';
 
 interface SettingsPopupProps {
   open: boolean;
@@ -8,6 +9,7 @@ interface SettingsPopupProps {
 }
 
 const SettingsPopup: FC<SettingsPopupProps> = ({ open, theme, onThemeToggle, onClose }) => {
+  const { t, language, setLanguage } = useTranslation();
   const popupRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -27,13 +29,13 @@ const SettingsPopup: FC<SettingsPopupProps> = ({ open, theme, onThemeToggle, onC
 
   return (
     <div ref={popupRef} className={`settings-popup${open ? ' settings-popup-open' : ''}`}>
-      <div className="settings-popup-header">Ustawienia</div>
+      <div className="settings-popup-header">{t('settings.title')}</div>
       <div className="settings-popup-row">
-        <span className="settings-popup-label">Motyw</span>
+        <span className="settings-popup-label">{t('settings.theme')}</span>
         <button
           className={`theme-toggle${theme === 'light' ? ' theme-toggle-light' : ''}`}
           onClick={onThemeToggle}
-          aria-label={`Przełącz na tryb ${theme === 'dark' ? 'jasny' : 'ciemny'}`}
+          aria-label={theme === 'dark' ? t('settings.switchToLight') : t('settings.switchToDark')}
         >
           <span className="theme-toggle-track">
             {/* Moon icon */}
@@ -59,6 +61,23 @@ const SettingsPopup: FC<SettingsPopupProps> = ({ open, theme, onThemeToggle, onC
             <span className="theme-toggle-thumb"></span>
           </span>
         </button>
+      </div>
+      <div className="settings-popup-row">
+        <span className="settings-popup-label">{t('settings.language')}</span>
+        <div className="language-toggle">
+          <button
+            className={`lang-btn${language === 'pl' ? ' lang-btn-active' : ''}`}
+            onClick={() => setLanguage('pl')}
+          >
+            PL
+          </button>
+          <button
+            className={`lang-btn${language === 'en' ? ' lang-btn-active' : ''}`}
+            onClick={() => setLanguage('en')}
+          >
+            EN
+          </button>
+        </div>
       </div>
     </div>
   );

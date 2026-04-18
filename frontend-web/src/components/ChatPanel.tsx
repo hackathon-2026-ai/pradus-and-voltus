@@ -1,4 +1,5 @@
 import { type FC, useState, useRef, useEffect } from 'react';
+import { useTranslation } from '../i18n/LanguageContext';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -10,7 +11,8 @@ interface ChatPanelProps {
   onClose: () => void;
 }
 
-const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
+const ChatPanel: FC<ChatPanelProps> = ({ open, onClose: _onClose }) => {
+  const { t } = useTranslation();
   const [inputValue, setInputValue] = useState('');
   const [expanded, setExpanded] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -42,16 +44,12 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
 
     // Simulate AI response after a delay
     setTimeout(() => {
-      const responses = [
-        `Na podstawie aktualnych warunków pogodowych farmy wiatrowe pracują z wydajnością około 72%. Najwyższa produkcja jest w województwie pomorskim.`,
-        `Całkowita zainstalowana moc w Polsce we wszystkich monitorowanych obiektach wynosi około 24 000 MW. Węgiel nadal stanowi największy udział — ok. 60%.`,
-        `Województwo śląskie ma najwyższe zużycie energii ze względu na bazę przemysłową, ze średnim współczynnikiem obciążenia na poziomie 78%.`,
-        `Farmy fotowoltaiczne osiągają dziś dobre wyniki — indeks nasłonecznienia wynosi 0,65. Farma Solarna Witnica w woj. lubuskim produkuje 52 MW.`,
-        `Magazyny energii są aktualnie naładowane w 89%. Magazyn Żarnowiec prowadzi z dostępną mocą 200 MW.`,
-        `Porównanie wiatru i słońca: farmy wiatrowe średnio 74% wydajności dzięki umiarkowanym wiatrom, a farmy solarne średnio 68% przy częściowym zachmurzeniu.`,
+      const responseKeys = [
+        'chat.response1', 'chat.response2', 'chat.response3',
+        'chat.response4', 'chat.response5', 'chat.response6',
       ];
-      const response = responses[Math.floor(Math.random() * responses.length)];
-      setMessages(prev => [...prev, { role: 'assistant', text: response }]);
+      const key = responseKeys[Math.floor(Math.random() * responseKeys.length)];
+      setMessages(prev => [...prev, { role: 'assistant', text: t(key) }]);
       setIsLoading(false);
     }, 2000 + Math.random() * 1500);
   };
@@ -73,11 +71,11 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
               <div className="chat-title">Voltuś AI</div>
               <div className="chat-status">
                 <span className="chat-status-dot"></span>
-                {isLoading ? 'Myślę...' : 'Gotowy'}
+                {isLoading ? t('chat.thinking') : t('chat.ready')}
               </div>
             </div>
           </div>
-          <button className="chat-close" onClick={() => setExpanded(e => !e)} aria-label={expanded ? 'Zmniejsz czat' : 'Powiększ czat'}>
+          <button className="chat-close" onClick={() => setExpanded(e => !e)} aria-label={expanded ? t('chat.shrink') : t('chat.expand')}>
             {expanded ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="4 14 10 14 10 20"/>
@@ -115,11 +113,11 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
           {messages.length === 0 && (
             <div className="chat-welcome">
               <h3>Voltuś AI</h3>
-              <p>Zapytaj mnie o dane energetyczne, obiekty lub regiony na mapie.</p>
+              <p>{t('chat.welcome')}</p>
               <div className="chat-suggestions">
-                <button className="chat-suggestion" onClick={() => { setInputValue("Jaka jest całkowita moc energetyczna?"); }}>Jaka jest całkowita moc energetyczna?</button>
-                <button className="chat-suggestion" onClick={() => { setInputValue("Porównaj produkcję wiatru i słońca"); }}>Porównaj produkcję wiatru i słońca</button>
-                <button className="chat-suggestion" onClick={() => { setInputValue("Które województwo zużywa najwięcej energii?"); }}>Które województwo zużywa najwięcej energii?</button>
+                <button className="chat-suggestion" onClick={() => { setInputValue(t('chat.suggestion1')); }}>{t('chat.suggestion1')}</button>
+                <button className="chat-suggestion" onClick={() => { setInputValue(t('chat.suggestion2')); }}>{t('chat.suggestion2')}</button>
+                <button className="chat-suggestion" onClick={() => { setInputValue(t('chat.suggestion3')); }}>{t('chat.suggestion3')}</button>
               </div>
             </div>
           )}
@@ -162,7 +160,7 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
               ref={inputRef}
               type="text"
               className="chat-input"
-              placeholder="Zapytaj o dane energetyczne..."
+              placeholder={t('chat.placeholder')}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => {
@@ -183,7 +181,7 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
             </button>
           </div>
           <div className="chat-input-hint">
-            Napędzany przez Voltuś AI
+            {t('chat.poweredBy')}
           </div>
         </div>
       </div>

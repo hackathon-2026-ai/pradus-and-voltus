@@ -3,6 +3,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { TILE_LAYERS } from '../data/tileLayers';
 import { PROVINCE_DATA } from '../data/provinceData';
+import { useTranslation } from '../i18n/LanguageContext';
+import { facilityTypeLabels, provinceNames } from '../i18n/translations';
 import {
   generateCountyEnergy,
   getLoadColor,
@@ -97,6 +99,7 @@ const MapView: FC<MapViewProps> = ({
   flyToPolandTrigger,
   searchQuery,
 }) => {
+  const { t, language } = useTranslation();
   const mapRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const provinceLayerRef = useRef<L.GeoJSON | null>(null);
@@ -106,7 +109,11 @@ const MapView: FC<MapViewProps> = ({
   const attributionRef = useRef<L.Control.Attribution | null>(null);
   const featureClickedRef = useRef(false);
 
-  // Stable refs for callbacks so GeoJSON event handlers always see current values
+  // Stable refs for callbacks and language so GeoJSON event handlers always see current values
+  const languageRef = useRef(language);
+  languageRef.current = language;
+  const tRef = useRef(t);
+  tRef.current = t;
   const activeProvinceRef = useRef(activeProvince);
   activeProvinceRef.current = activeProvince;
   const activeCountyRef = useRef(activeCounty);
@@ -226,16 +233,19 @@ const MapView: FC<MapViewProps> = ({
         const agg = aggregateCountyData(counties);
         const load = Math.round((agg.usageMW / agg.capacityMW) * 100);
         const loadColor = load > 80 ? '#ef4444' : load > 65 ? '#f59e0b' : load > 50 ? '#3b82f6' : '#22c55e';
+        const lang = languageRef.current;
+        const _t = tRef.current;
+        const provName = provinceNames[nazwa]?.[lang] ?? d?.nameEN ?? nazwa;
         const tip = d ? `
           <div class="tt-card">
-            <div class="tt-name">${d.nameEN}</div>
-            <div class="tt-sub">${d.capital} · ${counties.length} powiatów</div>
+            <div class="tt-name">${provName}</div>
+            <div class="tt-sub">${d.capital} · ${counties.length} ${_t('map.counties')}</div>
             <div class="tt-bar-wrap"><div class="tt-bar" style="width:${load}%;background:${loadColor}"></div></div>
             <div class="tt-stats">
-              <div class="tt-stat"><span class="tt-stat-val">${Math.round(agg.usageMW)}</span><span class="tt-stat-lbl">MW zuż.</span></div>
-              <div class="tt-stat"><span class="tt-stat-val">${Math.round(agg.capacityMW)}</span><span class="tt-stat-lbl">MW moc</span></div>
-              <div class="tt-stat"><span class="tt-stat-val" style="color:${loadColor}">${load}%</span><span class="tt-stat-lbl">obciąż.</span></div>
-              <div class="tt-stat"><span class="tt-stat-val">${agg.renewableShare}%</span><span class="tt-stat-lbl">OZE</span></div>
+              <div class="tt-stat"><span class="tt-stat-val">${Math.round(agg.usageMW)}</span><span class="tt-stat-lbl">${_t('map.mwUsed')}</span></div>
+              <div class="tt-stat"><span class="tt-stat-val">${Math.round(agg.capacityMW)}</span><span class="tt-stat-lbl">${_t('map.mwCap')}</span></div>
+              <div class="tt-stat"><span class="tt-stat-val" style="color:${loadColor}">${load}%</span><span class="tt-stat-lbl">${_t('map.load')}</span></div>
+              <div class="tt-stat"><span class="tt-stat-val">${agg.renewableShare}%</span><span class="tt-stat-lbl">${_t('map.green')}</span></div>
             </div>
           </div>
         ` : nazwa;
@@ -265,7 +275,7 @@ const MapView: FC<MapViewProps> = ({
     }).addTo(map);
 
     provinceLayerRef.current = layer;
-  }, [provinceGeoData, viewMode]);
+  }, [provinceGeoData, viewMode, language]);
 
   // ===== RENDER COUNTIES =====
   useEffect(() => {
@@ -304,15 +314,16 @@ const MapView: FC<MapViewProps> = ({
         const load = Math.round((d.usageMW / d.capacityMW) * 100);
         const displayName = nazwa.replace('powiat ', '');
         const loadColor = load > 80 ? '#ef4444' : load > 65 ? '#f59e0b' : load > 50 ? '#3b82f6' : '#22c55e';
+        const _t = tRef.current;
 
         const tip = `
           <div class="tt-card">
             <div class="tt-name">${displayName}</div>
             <div class="tt-bar-wrap"><div class="tt-bar" style="width:${load}%;background:${loadColor}"></div></div>
             <div class="tt-stats">
-              <div class="tt-stat"><span class="tt-stat-val">${d.usageMW}</span><span class="tt-stat-lbl">MW zuż.</span></div>
-              <div class="tt-stat"><span class="tt-stat-val">${d.capacityMW}</span><span class="tt-stat-lbl">MW moc</span></div>
-              <div class="tt-stat"><span class="tt-stat-val" style="color:${loadColor}">${load}%</span><span class="tt-stat-lbl">obciąż.</span></div>
+              <div class="tt-stat"><span class="tt-stat-val">${d.usageMW}</span><span class="tt-stat-lbl">${_t('map.mwUsed')}</span></div>
+              <div class="tt-stat"><span class="tt-stat-val">${d.capacityMW}</span><span class="tt-stat-lbl">${_t('map.mwCap')}</span></div>
+              <div class="tt-stat"><span class="tt-stat-val" style="color:${loadColor}">${load}%</span><span class="tt-stat-lbl">${_t('map.load')}</span></div>
             </div>
           </div>
         `;
@@ -353,7 +364,7 @@ const MapView: FC<MapViewProps> = ({
         countyLayerRef.current = null;
       }
     };
-  }, [viewMode, activeProvince, countyGeoData]);
+  }, [viewMode, activeProvince, countyGeoData, language]);
 
   // ===== HIGHLIGHT SELECTED COUNTY =====
   useEffect(() => {
@@ -405,6 +416,8 @@ const MapView: FC<MapViewProps> = ({
 
     facilitiesToShow.forEach((facility, idx) => {
       const config = FACILITY_TYPE_CONFIG[facility.type];
+      const lang = languageRef.current;
+      const ftLabel = facilityTypeLabels[facility.type]?.[lang] ?? config.label;
 
       const html = `
         <div class="facility-pin type-${facility.type}" style="animation-delay: ${idx * 0.05}s" data-facility-id="${facility.id}">
@@ -413,7 +426,7 @@ const MapView: FC<MapViewProps> = ({
           </div>
           <div class="facility-label">
             <div>${facility.name}</div>
-            <div class="facility-label-type">${config.label}${facility.capacityMW > 0 ? ' · ' + facility.capacityMW + ' MW' : ''}</div>
+            <div class="facility-label-type">${ftLabel}${facility.capacityMW > 0 ? ' · ' + facility.capacityMW + ' MW' : ''}</div>
           </div>
         </div>
       `;
@@ -435,7 +448,7 @@ const MapView: FC<MapViewProps> = ({
 
       facilityMarkersRef.current.push(marker);
     });
-  }, [viewMode, activeProvince]);
+  }, [viewMode, activeProvince, language]);
 
   // ===== HIGHLIGHT ACTIVE FACILITY (without re-creating markers) =====
   useEffect(() => {
@@ -497,7 +510,7 @@ const MapView: FC<MapViewProps> = ({
         {Object.entries(FACILITY_TYPE_CONFIG).map(([key, config]) => (
           <div key={key} className="legend-item">
             <span className="legend-dot" style={{ background: config.color }}></span>
-            <span>{config.label}</span>
+            <span>{facilityTypeLabels[key]?.[language] ?? config.label}</span>
           </div>
         ))}
       </div>
