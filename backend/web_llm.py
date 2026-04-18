@@ -118,8 +118,8 @@ def run_voltus_api(user_prompt: str, model: str = "gemma4:e2b"):
         return {"status": "error", "message": str(e)}
 
 
-
+'''
 if __name__ == "__main__":
     result = run_voltus_api("Zrób analizę na najbliższe 24h.")
     # Wyświetlamy sformatowany JSON
-    print(json.dumps(result, indent=4, ensure_ascii=False))
+    print(json.dumps(result, indent=4, ensure_ascii=False))'''

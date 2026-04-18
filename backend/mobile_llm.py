@@ -96,10 +96,10 @@ def run_pradus_api(user_prompt: str, model: str = "gemma4:e2b"):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-
+'''
 # Testowe odpalenie (możesz usunąć po sprawdzeniu)
 if __name__ == "__main__":
     user_prompt = "Witoj Prąduś, sprawdzisz mi kiedy ładwoać fure?"
     print("Łączę z Prądusiem...")
     result = run_pradus_api(user_prompt)
-    print(json.dumps(result, indent=4, ensure_ascii=False))
+    print(json.dumps(result, indent=4, ensure_ascii=False))'''
