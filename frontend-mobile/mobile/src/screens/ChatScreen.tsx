@@ -24,7 +24,7 @@ export default function ChatScreen() {
   const [ziutekPhase, setZiutekPhase] = useState<'output3' | 'idle' | 'output2' | 'hidden'>('output3');
   const flatRef = useRef<FlatList>(null);
 
-  const fetchVoltusResponse = async (prompt: string): Promise<string> => {
+  const fetchPradusResponse = async (prompt: string): Promise<string> => {
     const url = `/api/chat/pradus?message=${encodeURIComponent(prompt)}`;
     const response = await fetch(url);
 
@@ -39,10 +39,17 @@ export default function ChatScreen() {
     }
 
     if (data?.status === 'success') {
-      const summary = data.ui_components?.ai_copilot_panel?.executive_summary ?? '';
-      const dsr = data.ui_components?.ai_copilot_panel?.dsr_action ?? '';
-      const explain = data.explainable_ai ?? '';
-      return [summary, dsr, explain].filter(Boolean).join('\n\n');
+      const alert = data.ui_components?.pradus_alert ?? '';
+      const timeWindow = data.ui_components?.kalkulator_dane?.okno_czasowe ?? '';
+      const savings = data.ui_components?.kalkulator_dane?.stawka_oszczednosciowa_pln;
+      const explain = data.compliance_and_legal?.explainability_xai ?? '';
+
+      const parts: string[] = [];
+      if (alert) parts.push(alert);
+      if (timeWindow) parts.push(`Najlepsza godzina: ${timeWindow}`);
+      if (savings != null && savings > 0) parts.push(`Estymowana oszczędność: ${savings} PLN/h`);
+      if (explain) parts.push(explain);
+      return parts.join('\n\n');
     }
 
     if (data?.message) {
@@ -61,7 +68,7 @@ export default function ChatScreen() {
     setIsLoading(true);
 
     try {
-      const responseText = await fetchVoltusResponse(text);
+      const responseText = await fetchPradusResponse(text);
       const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'assistant', text: responseText };
       
       setMessages(prev => [...prev, aiMsg]);

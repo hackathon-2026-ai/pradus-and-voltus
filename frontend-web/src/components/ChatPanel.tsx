@@ -51,7 +51,7 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose: _onClose }) => {
     if (data?.status === 'success') {
       const summary = data.ui_components?.ai_copilot_panel?.executive_summary ?? '';
       const dsr = data.ui_components?.ai_copilot_panel?.dsr_action ?? '';
-      const explain = data.explainable_ai ?? '';
+      const explain = data.ui_components?.explainable_ai ?? '';
       return [summary, dsr, explain].filter(Boolean).join('\n\n');
     }
 
