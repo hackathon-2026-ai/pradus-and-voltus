@@ -99,9 +99,9 @@ const Faceplate: FC<FaceplateProps> = ({
         </button>
 
         <div className="faceplate-header">
-          <button className="btn-back" title="Back" onClick={onBack}>
+          <button className="btn-back" title="Wróć" onClick={onBack}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
-            <span>Back</span>
+            <span>Wróć</span>
           </button>
           <h2 id="region-name">{facility.name}</h2>
           <div className={`facility-type-badge ${facility.type}`}>
@@ -109,31 +109,31 @@ const Faceplate: FC<FaceplateProps> = ({
           </div>
           <div className="live-indicator">
             <span className="live-dot"></span>
-            <span className="live-text">LIVE</span>
+            <span className="live-text">NA ŻYWO</span>
           </div>
         </div>
 
         {/* Description */}
         <p className="facility-description">{facility.description}</p>
         {facility.operator && (
-          <p className="facility-operator">Operated by <strong>{facility.operator}</strong>{facility.yearBuilt ? ` · Since ${facility.yearBuilt}` : ''}</p>
+          <p className="facility-operator">Operator: <strong>{facility.operator}</strong>{facility.yearBuilt ? ` · Od ${facility.yearBuilt}` : ''}</p>
         )}
 
         {/* Hero stats */}
         <div className="faceplate-stats">
           {isHouse ? (
             <>
-              <StatCard icon="usage" label="Consumption" value={`${metrics.consumptionMW} MW`} />
-              <StatCard icon="load" label="Monthly Bill" value={`${metrics.monthlyBillPLN} PLN`} />
-              <StatCard icon="available" label="Efficiency" value={`${metrics.efficiency}%`} />
-              <StatCard icon="capacity" label="Weather Impact" value={`${metrics.weatherImpact > 0 ? '+' : ''}${metrics.weatherImpact}%`} />
+              <StatCard icon="usage" label="Zużycie" value={`${metrics.consumptionMW} MW`} />
+              <StatCard icon="load" label="Rachunek miesięczny" value={`${metrics.monthlyBillPLN} PLN`} />
+              <StatCard icon="available" label="Wydajność" value={`${metrics.efficiency}%`} />
+              <StatCard icon="capacity" label="Wpływ pogody" value={`${metrics.weatherImpact > 0 ? '+' : ''}${metrics.weatherImpact}%`} />
             </>
           ) : (
             <>
-              <StatCard icon="usage" label="Current Output" value={`${metrics.currentOutputMW} MW`} />
-              <StatCard icon="capacity" label="Capacity" value={`${facility.capacityMW} MW`} />
-              <StatCard icon="available" label="Efficiency" value={`${metrics.efficiency}%`} />
-              <StatCard icon="load" label="Daily Output" value={`${metrics.dailyOutputMWh} MWh`} />
+              <StatCard icon="usage" label="Aktualna produkcja" value={`${metrics.currentOutputMW} MW`} />
+              <StatCard icon="capacity" label="Moc zainstalowana" value={`${facility.capacityMW} MW`} />
+              <StatCard icon="available" label="Wydajność" value={`${metrics.efficiency}%`} />
+              <StatCard icon="load" label="Produkcja dzienna" value={`${metrics.dailyOutputMWh} MWh`} />
             </>
           )}
         </div>
@@ -145,17 +145,17 @@ const Faceplate: FC<FaceplateProps> = ({
         <div className="facility-metrics">
           {isHouse ? (
             <>
-              <MetricCard label="Energy Rating" value={metrics.efficiencyRating || 'N/A'} />
-              <MetricCard label="CO₂ Footprint" value={`${(metrics.co2Factor * (metrics.consumptionMW || 0) * 24).toFixed(1)} t/day`} />
-              <MetricCard label="Base Efficiency" value={`${facility.baseEfficiency}%`} />
-              <MetricCard label="Grid Supply" value="Connected" />
+              <MetricCard label="Klasa energetyczna" value={metrics.efficiencyRating || 'N/D'} />
+              <MetricCard label="Ślad CO₂" value={`${(metrics.co2Factor * (metrics.consumptionMW || 0) * 24).toFixed(1)} t/dzień`} />
+              <MetricCard label="Wydajność bazowa" value={`${facility.baseEfficiency}%`} />
+              <MetricCard label="Zasilanie z sieci" value="Podłączony" />
             </>
           ) : (
             <>
-              <MetricCard label="Grid Share" value={`${metrics.gridContribution}%`} />
-              <MetricCard label={metrics.co2Factor > 0 ? 'CO₂ Emitted' : 'CO₂ Avoided'} value={`${(metrics.co2Factor > 0 ? metrics.co2Factor * metrics.currentOutputMW * 24 : (0.45 - metrics.co2Factor) * metrics.currentOutputMW * 24).toFixed(0)} t/day`} />
-              <MetricCard label="Cost/MWh" value={`${metrics.operatingCostPerMWh} PLN`} />
-              <MetricCard label="Year Built" value={facility.yearBuilt ? `${facility.yearBuilt}` : 'N/A'} />
+              <MetricCard label="Udział w sieci" value={`${metrics.gridContribution}%`} />
+              <MetricCard label={metrics.co2Factor > 0 ? 'Emisja CO₂' : 'Uniknięte CO₂'} value={`${(metrics.co2Factor > 0 ? metrics.co2Factor * metrics.currentOutputMW * 24 : (0.45 - metrics.co2Factor) * metrics.currentOutputMW * 24).toFixed(0)} t/dzień`} />
+              <MetricCard label="Koszt/MWh" value={`${metrics.operatingCostPerMWh} PLN`} />
+              <MetricCard label="Rok budowy" value={facility.yearBuilt ? `${facility.yearBuilt}` : 'N/D'} />
             </>
           )}
         </div>
@@ -167,8 +167,8 @@ const Faceplate: FC<FaceplateProps> = ({
               {metrics.efficiencyRating}
             </div>
             <div className="rating-info">
-              <span className="rating-title">Energy Efficiency Rating</span>
-              <span className="rating-subtitle">Based on insulation, heating system & weather response</span>
+              <span className="rating-title">Klasa efektywności energetycznej</span>
+              <span className="rating-subtitle">Na podstawie izolacji, systemu grzewczego i reakcji na pogodę</span>
             </div>
           </div>
         )}
@@ -176,7 +176,7 @@ const Faceplate: FC<FaceplateProps> = ({
         {/* Nearby suppliers for houses */}
         {isHouse && metrics.nearbySuppliers && metrics.nearbySuppliers.length > 0 && (
           <div className="suppliers-section">
-            <h4>Nearby Energy Suppliers</h4>
+            <h4>Pobliskie źródła energii</h4>
             <div className="cities-list">
               {metrics.nearbySuppliers.map((name) => (
                 <div key={name} className="city-item">
@@ -202,12 +202,12 @@ const Faceplate: FC<FaceplateProps> = ({
     : null;
 
   const detailRows = !showCountyList ? [
-    { label: 'Current Usage', value: `${data.usageMW} MW`, color: '#f59e0b' },
-    { label: 'Total Capacity', value: `${data.capacityMW} MW`, color: '#6366f1' },
-    { label: 'Available', value: `${data.availableMW} MW`, color: '#10b981' },
-    { label: 'Grid Stability', value: `${data.gridStability}%`, color: '#22d3ee' },
-    { label: 'Renewable Share', value: `${data.renewableShare}%`, color: '#22c55e' },
-    { label: 'Reserve Margin', value: `${data.reserveMargin}%`, color: '#f43f5e' },
+    { label: 'Aktualne zużycie', value: `${data.usageMW} MW`, color: '#f59e0b' },
+    { label: 'Całkowita moc', value: `${data.capacityMW} MW`, color: '#6366f1' },
+    { label: 'Dostępna', value: `${data.availableMW} MW`, color: '#10b981' },
+    { label: 'Stabilność sieci', value: `${data.gridStability}%`, color: '#22d3ee' },
+    { label: 'Udział OZE', value: `${data.renewableShare}%`, color: '#22c55e' },
+    { label: 'Margines rezerwy', value: `${data.reserveMargin}%`, color: '#f43f5e' },
   ] : null;
 
   return (
@@ -224,17 +224,17 @@ const Faceplate: FC<FaceplateProps> = ({
         <button
           id="btn-back-provinces"
           className={`btn-back${viewMode === 'provinces' ? ' hidden' : ''}`}
-          title="Back to provinces"
+          title="Wróć do województw"
           onClick={onBack}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
-          <span>Back</span>
+          <span>Wróć</span>
         </button>
         <h2 id="region-name">{title}</h2>
         <p id="region-capital" className="region-subtitle">{subtitle}</p>
         <div className="live-indicator">
           <span className="live-dot"></span>
-          <span className="live-text">LIVE</span>
+          <span className="live-text">NA ŻYWO</span>
         </div>
       </div>
 
@@ -245,7 +245,7 @@ const Faceplate: FC<FaceplateProps> = ({
           </div>
           <div className="stat-info">
             <span className="stat-value" id="stat-usage">{Math.round(data.usageMW)} MW</span>
-            <span className="stat-label">Current Usage</span>
+            <span className="stat-label">Aktualne zużycie</span>
           </div>
         </div>
         <div className="stat-card">
@@ -254,7 +254,7 @@ const Faceplate: FC<FaceplateProps> = ({
           </div>
           <div className="stat-info">
             <span className="stat-value" id="stat-capacity">{Math.round(data.capacityMW)} MW</span>
-            <span className="stat-label">Total Capacity</span>
+            <span className="stat-label">Całkowita moc</span>
           </div>
         </div>
         <div className="stat-card">
@@ -263,7 +263,7 @@ const Faceplate: FC<FaceplateProps> = ({
           </div>
           <div className="stat-info">
             <span className="stat-value" id="stat-available">{Math.round(data.availableMW)} MW</span>
-            <span className="stat-label">Available Energy</span>
+            <span className="stat-label">Dostępna energia</span>
           </div>
         </div>
         <div className="stat-card">
@@ -272,28 +272,28 @@ const Faceplate: FC<FaceplateProps> = ({
           </div>
           <div className="stat-info">
             <span className="stat-value" id="stat-load">{load}%</span>
-            <span className="stat-label">Load Factor</span>
+            <span className="stat-label">Współczynnik obciążenia</span>
           </div>
         </div>
       </div>
 
       <div className="faceplate-details">
         <div className="detail-row">
-          <span className="detail-label">Grid Stability</span>
+          <span className="detail-label">Stabilność sieci</span>
           <div className="detail-bar-wrapper">
             <div className="detail-bar stability" id="bar-stability"></div>
           </div>
           <span className="detail-value" id="stat-stability">{data.gridStability}%</span>
         </div>
         <div className="detail-row">
-          <span className="detail-label">Renewable Share</span>
+          <span className="detail-label">Udział OZE</span>
           <div className="detail-bar-wrapper">
             <div className="detail-bar renewable" id="bar-renewable"></div>
           </div>
           <span className="detail-value" id="stat-renewable">{data.renewableShare}%</span>
         </div>
         <div className="detail-row">
-          <span className="detail-label">Reserve Margin</span>
+          <span className="detail-label">Margines rezerwy</span>
           <div className="detail-bar-wrapper">
             <div className="detail-bar reserve" id="bar-reserve"></div>
           </div>
@@ -303,7 +303,7 @@ const Faceplate: FC<FaceplateProps> = ({
 
       <div className="faceplate-cities">
         <h3 id="counties-header">
-          {showCountyList && countyItems ? `Counties (${countyItems.length})` : 'County Details'}
+          {showCountyList && countyItems ? `Powiaty (${countyItems.length})` : 'Szczegóły powiatu'}
         </h3>
         <div id="counties-list" className="cities-list">
           {countyItems && countyItems.map(({ name, data: cd }) => {
@@ -385,28 +385,28 @@ const WeatherSection: FC<{ weather: WeatherData; metrics: FacilityMetrics }> = (
 
       <div className="weather-gauges">
         <div className="weather-gauge">
-          <span className="weather-gauge-label">Wind</span>
+          <span className="weather-gauge-label">Wiatr</span>
           <div className="weather-gauge-bar">
             <div className="weather-gauge-fill wind" style={{ width: `${Math.min(weather.windSpeed / 25 * 100, 100)}%` }}></div>
           </div>
           <span className="weather-gauge-value">{weather.windSpeed} m/s</span>
         </div>
         <div className="weather-gauge">
-          <span className="weather-gauge-label">Sunshine</span>
+          <span className="weather-gauge-label">Słońce</span>
           <div className="weather-gauge-bar">
             <div className="weather-gauge-fill sun" style={{ width: `${weather.sunshineIndex * 100}%` }}></div>
           </div>
           <span className="weather-gauge-value">{Math.round(weather.sunshineIndex * 100)}%</span>
         </div>
         <div className="weather-gauge">
-          <span className="weather-gauge-label">Rain</span>
+          <span className="weather-gauge-label">Deszcz</span>
           <div className="weather-gauge-bar">
             <div className="weather-gauge-fill rain" style={{ width: `${weather.rainProbability * 100}%` }}></div>
           </div>
           <span className="weather-gauge-value">{Math.round(weather.rainProbability * 100)}%</span>
         </div>
         <div className="weather-gauge">
-          <span className="weather-gauge-label">Temp</span>
+          <span className="weather-gauge-label">Temp.</span>
           <div className="weather-gauge-bar">
             <div className="weather-gauge-fill temp" style={{ width: `${Math.min(Math.max((weather.temperature + 10) / 45 * 100, 5), 100)}%` }}></div>
           </div>

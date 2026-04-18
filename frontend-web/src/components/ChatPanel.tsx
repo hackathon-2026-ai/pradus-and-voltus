@@ -43,12 +43,12 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
     // Simulate AI response after a delay
     setTimeout(() => {
       const responses = [
-        `Based on current weather conditions, wind farms are operating at approximately 72% efficiency. The strongest output is in the Pomerania region.`,
-        `Poland's total installed capacity across all tracked facilities is approximately 24,000 MW. Coal still represents the largest share at ~60%.`,
-        `The Silesian voivodeship has the highest energy consumption due to its industrial base, with current load factors averaging 78%.`,
-        `Solar parks are performing well today with sunshine index at 0.65. The Witnica Solar Park in Lubuskie is producing 52 MW.`,
-        `Energy storage facilities are currently at 89% charge capacity. The Żarnowiec Battery Storage leads with 200 MW available.`,
-        `Comparing wind vs solar: wind farms average 74% efficiency today due to moderate winds, while solar parks average 68% under partial cloud cover.`,
+        `Na podstawie aktualnych warunków pogodowych farmy wiatrowe pracują z wydajnością około 72%. Najwyższa produkcja jest w województwie pomorskim.`,
+        `Całkowita zainstalowana moc w Polsce we wszystkich monitorowanych obiektach wynosi około 24 000 MW. Węgiel nadal stanowi największy udział — ok. 60%.`,
+        `Województwo śląskie ma najwyższe zużycie energii ze względu na bazę przemysłową, ze średnim współczynnikiem obciążenia na poziomie 78%.`,
+        `Farmy fotowoltaiczne osiągają dziś dobre wyniki — indeks nasłonecznienia wynosi 0,65. Farma Solarna Witnica w woj. lubuskim produkuje 52 MW.`,
+        `Magazyny energii są aktualnie naładowane w 89%. Magazyn Żarnowiec prowadzi z dostępną mocą 200 MW.`,
+        `Porównanie wiatru i słońca: farmy wiatrowe średnio 74% wydajności dzięki umiarkowanym wiatrom, a farmy solarne średnio 68% przy częściowym zachmurzeniu.`,
       ];
       const response = responses[Math.floor(Math.random() * responses.length)];
       setMessages(prev => [...prev, { role: 'assistant', text: response }]);
@@ -73,11 +73,11 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
               <div className="chat-title">Voltuś AI</div>
               <div className="chat-status">
                 <span className="chat-status-dot"></span>
-                {isLoading ? 'Thinking...' : 'Ready'}
+                {isLoading ? 'Myślę...' : 'Gotowy'}
               </div>
             </div>
           </div>
-          <button className="chat-close" onClick={() => setExpanded(e => !e)} aria-label={expanded ? 'Shrink chat' : 'Expand chat'}>
+          <button className="chat-close" onClick={() => setExpanded(e => !e)} aria-label={expanded ? 'Zmniejsz czat' : 'Powiększ czat'}>
             {expanded ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="4 14 10 14 10 20"/>
@@ -115,11 +115,11 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
           {messages.length === 0 && (
             <div className="chat-welcome">
               <h3>Voltuś AI</h3>
-              <p>Ask me anything about energy data, facilities, or regions on the map.</p>
+              <p>Zapytaj mnie o dane energetyczne, obiekty lub regiony na mapie.</p>
               <div className="chat-suggestions">
-                <button className="chat-suggestion" onClick={() => { setInputValue("What's the total energy capacity?"); }}>What's the total energy capacity?</button>
-                <button className="chat-suggestion" onClick={() => { setInputValue("Compare wind vs solar output"); }}>Compare wind vs solar output</button>
-                <button className="chat-suggestion" onClick={() => { setInputValue("Which province uses the most energy?"); }}>Which province uses the most energy?</button>
+                <button className="chat-suggestion" onClick={() => { setInputValue("Jaka jest całkowita moc energetyczna?"); }}>Jaka jest całkowita moc energetyczna?</button>
+                <button className="chat-suggestion" onClick={() => { setInputValue("Porównaj produkcję wiatru i słońca"); }}>Porównaj produkcję wiatru i słońca</button>
+                <button className="chat-suggestion" onClick={() => { setInputValue("Które województwo zużywa najwięcej energii?"); }}>Które województwo zużywa najwięcej energii?</button>
               </div>
             </div>
           )}
@@ -162,7 +162,7 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
               ref={inputRef}
               type="text"
               className="chat-input"
-              placeholder="Ask about energy data..."
+              placeholder="Zapytaj o dane energetyczne..."
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => {
@@ -183,7 +183,7 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
             </button>
           </div>
           <div className="chat-input-hint">
-            Powered by Voltuś AI
+            Napędzany przez Voltuś AI
           </div>
         </div>
       </div>

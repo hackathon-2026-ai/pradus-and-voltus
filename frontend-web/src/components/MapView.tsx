@@ -229,13 +229,13 @@ const MapView: FC<MapViewProps> = ({
         const tip = d ? `
           <div class="tt-card">
             <div class="tt-name">${d.nameEN}</div>
-            <div class="tt-sub">${d.capital} · ${counties.length} counties</div>
+            <div class="tt-sub">${d.capital} · ${counties.length} powiatów</div>
             <div class="tt-bar-wrap"><div class="tt-bar" style="width:${load}%;background:${loadColor}"></div></div>
             <div class="tt-stats">
-              <div class="tt-stat"><span class="tt-stat-val">${Math.round(agg.usageMW)}</span><span class="tt-stat-lbl">MW used</span></div>
-              <div class="tt-stat"><span class="tt-stat-val">${Math.round(agg.capacityMW)}</span><span class="tt-stat-lbl">MW cap</span></div>
-              <div class="tt-stat"><span class="tt-stat-val" style="color:${loadColor}">${load}%</span><span class="tt-stat-lbl">load</span></div>
-              <div class="tt-stat"><span class="tt-stat-val">${agg.renewableShare}%</span><span class="tt-stat-lbl">green</span></div>
+              <div class="tt-stat"><span class="tt-stat-val">${Math.round(agg.usageMW)}</span><span class="tt-stat-lbl">MW zuż.</span></div>
+              <div class="tt-stat"><span class="tt-stat-val">${Math.round(agg.capacityMW)}</span><span class="tt-stat-lbl">MW moc</span></div>
+              <div class="tt-stat"><span class="tt-stat-val" style="color:${loadColor}">${load}%</span><span class="tt-stat-lbl">obciąż.</span></div>
+              <div class="tt-stat"><span class="tt-stat-val">${agg.renewableShare}%</span><span class="tt-stat-lbl">OZE</span></div>
             </div>
           </div>
         ` : nazwa;
@@ -310,9 +310,9 @@ const MapView: FC<MapViewProps> = ({
             <div class="tt-name">${displayName}</div>
             <div class="tt-bar-wrap"><div class="tt-bar" style="width:${load}%;background:${loadColor}"></div></div>
             <div class="tt-stats">
-              <div class="tt-stat"><span class="tt-stat-val">${d.usageMW}</span><span class="tt-stat-lbl">MW used</span></div>
-              <div class="tt-stat"><span class="tt-stat-val">${d.capacityMW}</span><span class="tt-stat-lbl">MW cap</span></div>
-              <div class="tt-stat"><span class="tt-stat-val" style="color:${loadColor}">${load}%</span><span class="tt-stat-lbl">load</span></div>
+              <div class="tt-stat"><span class="tt-stat-val">${d.usageMW}</span><span class="tt-stat-lbl">MW zuż.</span></div>
+              <div class="tt-stat"><span class="tt-stat-val">${d.capacityMW}</span><span class="tt-stat-lbl">MW moc</span></div>
+              <div class="tt-stat"><span class="tt-stat-val" style="color:${loadColor}">${load}%</span><span class="tt-stat-lbl">obciąż.</span></div>
             </div>
           </div>
         `;

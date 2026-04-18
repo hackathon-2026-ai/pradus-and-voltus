@@ -53,22 +53,22 @@ export function getCurrentWeather(): WeatherData {
 
   if (windSpeed > 15 && rainProbability > 0.6) {
     condition = 'stormy';
-    conditionLabel = 'Stormy';
+    conditionLabel = 'Burzowo';
   } else if (windSpeed > 12) {
     condition = 'windy';
-    conditionLabel = 'Windy';
+    conditionLabel = 'Wietrznie';
   } else if (rainProbability > 0.5) {
     condition = 'rainy';
-    conditionLabel = 'Rainy';
+    conditionLabel = 'Deszczowo';
   } else if (sunshineIndex < 0.3) {
     condition = 'cloudy';
-    conditionLabel = 'Overcast';
+    conditionLabel = 'Pochmurno';
   } else if (sunshineIndex < 0.6) {
     condition = 'partly-cloudy';
-    conditionLabel = 'Partly Cloudy';
+    conditionLabel = 'Częściowe zachmurzenie';
   } else {
     condition = 'sunny';
-    conditionLabel = 'Clear & Sunny';
+    conditionLabel = 'Słonecznie';
   }
 
   return { windSpeed, sunshineIndex, temperature, rainProbability, condition, conditionLabel };
@@ -96,26 +96,26 @@ export function computeFacilityMetrics(
   // Explanation
   let weatherExplanation = '';
   if (type === 'wind') {
-    if (weather.windSpeed > 12) weatherExplanation = `Strong winds (${weather.windSpeed} m/s) boosting output by ${weatherImpact}%`;
-    else if (weather.windSpeed > 6) weatherExplanation = `Moderate winds (${weather.windSpeed} m/s) — good conditions`;
-    else weatherExplanation = `Low winds (${weather.windSpeed} m/s) reducing output`;
+    if (weather.windSpeed > 12) weatherExplanation = `Silny wiatr (${weather.windSpeed} m/s) zwiększa produkcję o ${weatherImpact}%`;
+    else if (weather.windSpeed > 6) weatherExplanation = `Umiarkowany wiatr (${weather.windSpeed} m/s) — dobre warunki`;
+    else weatherExplanation = `Słaby wiatr (${weather.windSpeed} m/s) zmniejsza produkcję`;
   } else if (type === 'solar') {
-    if (weather.sunshineIndex > 0.7) weatherExplanation = `Bright sunshine boosting output by ${weatherImpact}%`;
-    else if (weather.sunshineIndex > 0.4) weatherExplanation = `Partial cloud cover — moderate output`;
-    else weatherExplanation = `Heavy cloud cover reducing solar generation`;
+    if (weather.sunshineIndex > 0.7) weatherExplanation = `Intensywne nasłonecznienie zwiększa produkcję o ${weatherImpact}%`;
+    else if (weather.sunshineIndex > 0.4) weatherExplanation = `Częściowe zachmurzenie — umiarkowana produkcja`;
+    else weatherExplanation = `Duże zachmurzenie zmniejsza generację solarną`;
   } else if (type === 'hydro') {
-    if (weather.rainProbability > 0.5) weatherExplanation = `Rainfall increasing water flow — output up ${weatherImpact}%`;
-    else weatherExplanation = `Normal water levels — steady generation`;
+    if (weather.rainProbability > 0.5) weatherExplanation = `Opady zwiększają przepływ wody — produkcja w górę o ${weatherImpact}%`;
+    else weatherExplanation = `Normalny poziom wody — stabilna generacja`;
   } else if (type === 'coal') {
-    weatherExplanation = 'Thermal plant — minimal weather dependency';
+    weatherExplanation = 'Elektrownia cieplna — minimalna zależność od pogody';
   } else if (type === 'storage') {
-    weatherExplanation = 'Battery storage — independent of weather';
+    weatherExplanation = 'Magazyn bateryjny — niezależny od pogody';
   } else if (type === 'biomass') {
-    weatherExplanation = 'Biomass — stable fuel supply, minor weather effects';
+    weatherExplanation = 'Biomasa — stabilne dostawy paliwa, niewielki wpływ pogody';
   } else if (type === 'house') {
-    if (weather.temperature < 5) weatherExplanation = `Cold weather (${weather.temperature}°C) — high heating demand`;
-    else if (weather.temperature > 25) weatherExplanation = `Hot weather (${weather.temperature}°C) — cooling demand up`;
-    else weatherExplanation = `Mild weather (${weather.temperature}°C) — average consumption`;
+    if (weather.temperature < 5) weatherExplanation = `Zimno (${weather.temperature}°C) — duże zapotrzebowanie na ogrzewanie`;
+    else if (weather.temperature > 25) weatherExplanation = `Upał (${weather.temperature}°C) — wzrost zapotrzebowania na chłodzenie`;
+    else weatherExplanation = `Łagodna pogoda (${weather.temperature}°C) — przeciętne zużycie`;
   }
 
   // Output calculation
@@ -187,7 +187,7 @@ function getNearbySuppliers(house: EnergyFacility, allFacilities: EnergyFacility
     })
     .slice(0, 3)
     .map(f => f.name);
-  return suppliers.length > 0 ? suppliers : ['Regional Grid'];
+  return suppliers.length > 0 ? suppliers : ['Sieć regionalna'];
 }
 
 /** Weather condition icon SVG string for map / sidebar */

@@ -27,13 +27,13 @@ const SettingsPopup: FC<SettingsPopupProps> = ({ open, theme, onThemeToggle, onC
 
   return (
     <div ref={popupRef} className={`settings-popup${open ? ' settings-popup-open' : ''}`}>
-      <div className="settings-popup-header">Settings</div>
+      <div className="settings-popup-header">Ustawienia</div>
       <div className="settings-popup-row">
-        <span className="settings-popup-label">Theme</span>
+        <span className="settings-popup-label">Motyw</span>
         <button
           className={`theme-toggle${theme === 'light' ? ' theme-toggle-light' : ''}`}
           onClick={onThemeToggle}
-          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          aria-label={`Przełącz na tryb ${theme === 'dark' ? 'jasny' : 'ciemny'}`}
         >
           <span className="theme-toggle-track">
             {/* Moon icon */}
