@@ -203,7 +203,7 @@ const Faceplate: FC<FaceplateProps> = ({
   const load = Math.round((data.usageMW / data.capacityMW) * 100);
   const countyItems = showCountyList && counties.length > 0
     ? counties
-        .map(f => ({ name: f.properties.nazwa, data: generateCountyEnergy(f.properties.nazwa) }))
+        .map(f => ({ name: f.properties.nazwa, data: generateCountyEnergy(f.properties.nazwa, f.properties.province as string) }))
         .sort((a, b) => b.data.usageMW - a.data.usageMW)
     : null;
 

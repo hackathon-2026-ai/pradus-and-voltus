@@ -142,7 +142,7 @@ function App() {
 
   const handleCountyClickFromList = useCallback((countyName: string) => {
     if (!activeProvince) return;
-    const d = generateCountyEnergy(countyName);
+    const d = generateCountyEnergy(countyName, activeProvince!);
     handleCountyClick(countyName, d, activeProvince);
   }, [activeProvince, handleCountyClick]);
 
@@ -292,6 +292,8 @@ function App() {
             activeFacilityId={selectedFacility?.id ?? null}
             flyToPolandTrigger={flyTrigger}
             searchQuery={searchQuery}
+            faceplateVisible={faceplateVisible}
+            faceplateWidth={faceplateWidth}
           />
           <Faceplate
             visible={faceplateVisible}

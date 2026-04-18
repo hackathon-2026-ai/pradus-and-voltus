@@ -1878,6 +1878,58 @@ body {
     flex-shrink: 0;
 }
 
+/* ===== HEATMAP LEGEND ===== */
+.heatmap-legend {
+    position: absolute;
+    bottom: 40px;
+    right: 16px;
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 200px;
+    animation: fadeInUp 0.5s ease-out 0.9s both;
+}
+
+[data-theme="light"] .heatmap-legend {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.heatmap-legend-title {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.heatmap-bar-wrap {
+    height: 8px;
+    width: 100%;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+}
+
+.heatmap-bar-segment {
+    height: 100%;
+    flex: 1;
+}
+
+.heatmap-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
 /* ===== SETTINGS POPUP ===== */
 .settings-wrapper {
     position: relative;

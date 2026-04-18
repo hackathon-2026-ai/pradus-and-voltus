@@ -81,6 +81,8 @@ interface MapViewProps {
   activeFacilityId: string | null;
   flyToPolandTrigger: number;
   searchQuery: string;
+  faceplateVisible: boolean;
+  faceplateWidth: number;
 }
 
 const MapView: FC<MapViewProps> = ({
@@ -98,6 +100,8 @@ const MapView: FC<MapViewProps> = ({
   activeFacilityId,
   flyToPolandTrigger,
   searchQuery,
+  faceplateVisible,
+  faceplateWidth,
 }) => {
   const { t, language } = useTranslation();
   const mapRef = useRef<L.Map | null>(null);
@@ -232,7 +236,7 @@ const MapView: FC<MapViewProps> = ({
         const counties = getCountiesForProvince(countyGeoDataRef.current, nazwa);
         const agg = aggregateCountyData(counties);
         const load = Math.round((agg.usageMW / agg.capacityMW) * 100);
-        const loadColor = load > 80 ? '#ef4444' : load > 65 ? '#f59e0b' : load > 50 ? '#3b82f6' : '#22c55e';
+        const loadColor = getLoadColor(agg.usageMW, agg.capacityMW);
         const lang = languageRef.current;
         const _t = tRef.current;
         const provName = provinceNames[nazwa]?.[lang] ?? d?.nameEN ?? nazwa;
@@ -299,7 +303,7 @@ const MapView: FC<MapViewProps> = ({
     const layer = L.geoJSON(filtered, {
       style: (feature) => {
         if (!feature) return {};
-        const d = generateCountyEnergy(feature.properties.nazwa);
+        const d = generateCountyEnergy(feature.properties.nazwa, feature.properties.province);
         return {
           fillColor: getLoadColor(d.usageMW, d.capacityMW),
           fillOpacity: 0.6,
@@ -310,10 +314,10 @@ const MapView: FC<MapViewProps> = ({
       },
       onEachFeature: (feature, featureLayer) => {
         const nazwa = feature.properties.nazwa;
-        const d = generateCountyEnergy(nazwa);
+        const d = generateCountyEnergy(nazwa, feature.properties.province);
         const load = Math.round((d.usageMW / d.capacityMW) * 100);
         const displayName = nazwa.replace('powiat ', '');
-        const loadColor = load > 80 ? '#ef4444' : load > 65 ? '#f59e0b' : load > 50 ? '#3b82f6' : '#22c55e';
+        const loadColor = getLoadColor(d.usageMW, d.capacityMW);
         const _t = tRef.current;
 
         const tip = `
@@ -513,6 +517,29 @@ const MapView: FC<MapViewProps> = ({
             <span>{facilityTypeLabels[key]?.[language] ?? config.label}</span>
           </div>
         ))}
+      </div>
+      
+      {/* Heatmap Legend */}
+      <div 
+        className="heatmap-legend"
+        style={{
+          right: faceplateVisible ? `${faceplateWidth + 16}px` : '16px',
+          transition: 'right 0ms ease' // Match resize or smooth depending on Faceplate's resize
+        }}
+      >
+        <div className="heatmap-legend-title">{language === 'pl' ? 'OBCIĄŻENIE' : t('map.load')}</div>
+        <div className="heatmap-bar-wrap">
+          <div className="heatmap-bar-segment" style={{ background: '#32c544' }}></div>
+          <div className="heatmap-bar-segment" style={{ background: '#98c93c' }}></div>
+          <div className="heatmap-bar-segment" style={{ background: '#f4b916' }}></div>
+          <div className="heatmap-bar-segment" style={{ background: '#e07628' }}></div>
+          <div className="heatmap-bar-segment" style={{ background: '#d13535' }}></div>
+        </div>
+        <div className="heatmap-labels">
+          <span>0%</span>
+          <span>50%</span>
+          <span>100%</span>
+        </div>
       </div>
     </>
   );
