@@ -77,6 +77,11 @@ body {
     position: relative;
     z-index: 1000;
     flex-shrink: 0;
+    transition: width var(--transition-base);
+}
+
+.resizing .sidebar {
+    transition: none;
 }
 
 .sidebar::before {
@@ -154,6 +159,93 @@ body {
     border-radius: 20px;
     min-width: 36px;
     text-align: center;
+}
+
+/* ===== SIDEBAR COLLAPSED ===== */
+.sidebar-collapsed .logo-text,
+.sidebar-collapsed .nav-label,
+.sidebar-collapsed .zoom-info {
+    display: none;
+}
+
+.sidebar-collapsed .nav-item {
+    justify-content: center;
+    padding: 14px;
+}
+
+.sidebar-collapsed .sidebar-collapse-btn svg {
+    transform: rotate(180deg);
+}
+
+/* ===== SIDEBAR COLLAPSE BUTTON ===== */
+.sidebar-collapse-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 36px;
+    margin-top: 4px;
+    border: none;
+    border-top: 1px solid var(--border-subtle);
+    background: var(--bg-glass);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.sidebar-collapse-btn:hover {
+    background: var(--bg-glass-hover);
+    color: var(--text-primary);
+}
+
+/* ===== RESIZE HANDLES ===== */
+.resize-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    z-index: 1001;
+    transition: background var(--transition-fast);
+}
+
+.resize-handle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 32px;
+    border-radius: 1px;
+    background: transparent;
+    transition: background var(--transition-fast);
+}
+
+.resize-handle:hover::after,
+.resizing .resize-handle::after {
+    background: var(--accent-primary);
+}
+
+.resize-handle-right {
+    right: -3px;
+}
+
+.resize-handle-right::after {
+    right: 2px;
+}
+
+.resize-handle-left {
+    left: -3px;
+}
+
+.resize-handle-left::after {
+    left: 2px;
+}
+
+/* Prevent map/iframe from stealing mouse during resize */
+.resizing .map-container,
+.resizing iframe {
+    pointer-events: none;
 }
 
 /* ===== NAV ITEMS (AWS-style hover effects) ===== */
@@ -245,6 +337,36 @@ body {
     height: 24px;
     flex-shrink: 0;
     transition: all var(--transition-spring);
+}
+
+/* Fancy small visible badge for important tabs */
+.nav-icon.fancy {
+    position: relative;
+}
+
+.nav-icon.fancy svg {
+    display: block;
+}
+
+.nav-icon.fancy::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-primary));
+    border: 2px solid rgba(10, 14, 26, 0.9);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.28), 0 0 8px rgba(34, 211, 238, 0.12);
+    transform-origin: center;
+    animation: badge-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.25); opacity: 0.9; }
+    100% { transform: scale(1); opacity: 1; }
 }
 
 .nav-label {
@@ -533,10 +655,14 @@ body {
     position: relative;
     flex-shrink: 0;
     transform: translateX(0);
-    transition: transform var(--transition-slow), opacity var(--transition-slow);
+    transition: transform var(--transition-slow), opacity var(--transition-slow), width var(--transition-base);
     scrollbar-width: thin;
     scrollbar-color: var(--bg-glass-hover) transparent;
     z-index: 500;
+}
+
+.resizing .faceplate {
+    transition: none;
 }
 
 .faceplate::before {
@@ -1134,8 +1260,9 @@ body {
 
 /* Wind — spinning blade */
 .pin-anim-wind {
-    animation: pulse-sun 1s ease-in-out infinite;
+    /* animation: pulse-sun 1s ease-in-out infinite; */
     /* animation: spin-blade 2s linear infinite; */
+    filter: invert(1);
 }
 
 @keyframes spin-blade {

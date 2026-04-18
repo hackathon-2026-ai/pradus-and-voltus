@@ -46,8 +46,17 @@ function App() {
   // Chat state
   const [chatOpen, setChatOpen] = useState(false);
 
+  // Resize state
+  const [sidebarWidth, setSidebarWidth] = useState(240);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [faceplateWidth, setFaceplateWidth] = useState(380);
+
   const handleChatToggle = useCallback(() => {
     setChatOpen(prev => !prev);
+  }, []);
+
+  const handleSidebarCollapseToggle = useCallback(() => {
+    setSidebarCollapsed(prev => !prev);
   }, []);
 
   // ===== LOAD DATA =====
@@ -225,9 +234,13 @@ function App() {
         zoomLevel={zoomLevel}
         activeSection={activeSection}
         chatOpen={chatOpen}
+        width={sidebarWidth}
+        collapsed={sidebarCollapsed}
         onNavClick={setActiveSection}
         onFlyToPoland={handleFlyToPoland}
         onChatToggle={handleChatToggle}
+        onWidthChange={setSidebarWidth}
+        onCollapseToggle={handleSidebarCollapseToggle}
       />
       <main id="main-content" className="main-content">
         <TopBar onSearch={handleSearch} onTileToggle={handleTileToggle} />
@@ -261,6 +274,8 @@ function App() {
             onCountyClick={handleCountyClickFromList}
             activeCounty={activeCounty}
             facility={selectedFacility}
+            width={faceplateWidth}
+            onWidthChange={setFaceplateWidth}
           />
           <ChatPanel open={chatOpen} onClose={handleChatToggle} />
         </div>
