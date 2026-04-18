@@ -1,4 +1,4 @@
-import { type FC, useEffect, useRef } from 'react';
+import { type FC, useEffect, useRef, useState } from 'react';
 import { useTranslation } from '../i18n/LanguageContext';
 
 interface SettingsPopupProps {
@@ -8,9 +8,22 @@ interface SettingsPopupProps {
   onClose: () => void;
 }
 
+type ModelMode = 'local' | 'cloud';
+
+const MODEL_STORAGE_KEY = 'ai-model-mode';
+
+function getInitialModelMode(): ModelMode {
+  try {
+    const stored = localStorage.getItem(MODEL_STORAGE_KEY);
+    if (stored === 'local' || stored === 'cloud') return stored;
+  } catch { /* ignore */ }
+  return 'local';
+}
+
 const SettingsPopup: FC<SettingsPopupProps> = ({ open, theme, onThemeToggle, onClose }) => {
   const { t, language, setLanguage } = useTranslation();
   const popupRef = useRef<HTMLDivElement>(null);
+  const [modelMode, setModelMode] = useState<ModelMode>(getInitialModelMode);
 
   useEffect(() => {
     if (!open) return;
@@ -26,6 +39,12 @@ const SettingsPopup: FC<SettingsPopupProps> = ({ open, theme, onThemeToggle, onC
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open, onClose]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(MODEL_STORAGE_KEY, modelMode);
+    } catch { /* ignore */ }
+  }, [modelMode]);
 
   return (
     <div ref={popupRef} className={`settings-popup${open ? ' settings-popup-open' : ''}`}>
@@ -77,6 +96,34 @@ const SettingsPopup: FC<SettingsPopupProps> = ({ open, theme, onThemeToggle, onC
           >
             EN
           </button>
+        </div>
+      </div>
+
+      <div className="settings-popup-row settings-popup-row-stacked">
+        <span className="settings-popup-label">{t('settings.model')}</span>
+        <div className="model-toggle" role="group" aria-label={t('settings.model')}>
+          <button
+            type="button"
+            className={`model-btn${modelMode === 'local' ? ' model-btn-active' : ''}`}
+            onClick={() => setModelMode('local')}
+            aria-pressed={modelMode === 'local'}
+          >
+            {t('settings.modelLocal')}
+          </button>
+          <button
+            type="button"
+            className={`model-btn${modelMode === 'cloud' ? ' model-btn-active' : ''}`}
+            onClick={() => setModelMode('cloud')}
+            aria-pressed={modelMode === 'cloud'}
+          >
+            {t('settings.modelCloud')}
+          </button>
+        </div>
+
+        <div className="settings-popup-note" role="note">
+          <div className="settings-popup-note-title">{t('settings.modelDataTitle')}</div>
+          <div className="settings-popup-note-text">{t('settings.modelDataLocal')}</div>
+          <div className="settings-popup-note-text">{t('settings.modelDataCloud')}</div>
         </div>
       </div>
     </div>

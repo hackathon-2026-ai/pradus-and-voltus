@@ -448,6 +448,20 @@ const ThinkingMiniGame: FC<ThinkingMiniGameProps> = ({ active, paused, countdown
 const RAW_API_BASE = import.meta.env.VITE_API_BASE_URL as unknown;
 const API_BASE = (typeof RAW_API_BASE === 'string' && RAW_API_BASE.trim() ? RAW_API_BASE : '/api').replace(/\/$/, '');
 
+const RAW_CLOUD_API_BASE = import.meta.env.VITE_CLOUD_API_BASE_URL as unknown;
+const CLOUD_API_BASE = (typeof RAW_CLOUD_API_BASE === 'string' && RAW_CLOUD_API_BASE.trim() ? RAW_CLOUD_API_BASE : '').replace(/\/$/, '');
+
+type ModelMode = 'local' | 'cloud';
+const MODEL_STORAGE_KEY = 'ai-model-mode';
+
+function getPreferredModelMode(): ModelMode {
+  try {
+    const stored = localStorage.getItem(MODEL_STORAGE_KEY);
+    if (stored === 'cloud') return 'cloud';
+  } catch { /* ignore */ }
+  return 'local';
+}
+
 async function readBackendPayload(response: Response): Promise<unknown> {
   const rawText = await response.text();
   if (!rawText) return null;
@@ -586,9 +600,13 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
     setPendingAssistantText(null);
 
     try {
-      const response = await fetch(`${API_BASE}/chat/voltus?message=${encodeURIComponent(text)}`, {
+      const modelMode = getPreferredModelMode();
+      const requestBase = modelMode === 'cloud' && CLOUD_API_BASE ? CLOUD_API_BASE : API_BASE;
+
+      const response = await fetch(`${requestBase}/chat/voltus?message=${encodeURIComponent(text)}`, {
         headers: {
           Accept: 'application/json',
+          'X-AI-Model-Mode': modelMode,
         },
       });
 

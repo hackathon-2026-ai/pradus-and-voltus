@@ -26,6 +26,18 @@ export const translations: Translations = {
   'settings.language': { pl: 'Język', en: 'Language' },
   'settings.switchToLight': { pl: 'Przełącz na tryb jasny', en: 'Switch to light mode' },
   'settings.switchToDark': { pl: 'Przełącz na tryb ciemny', en: 'Switch to dark mode' },
+  'settings.model': { pl: 'Model AI', en: 'AI Model' },
+  'settings.modelLocal': { pl: 'Lokalny', en: 'Local' },
+  'settings.modelCloud': { pl: 'Chmurowy', en: 'Cloud' },
+  'settings.modelDataTitle': { pl: 'Dane i prywatność', en: 'Data & privacy' },
+  'settings.modelDataLocal': {
+    pl: 'Model lokalny (zalecany): przetwarzanie odbywa się na urządzeniu — zapytania pozostają na urządzeniu.',
+    en: 'Local model (recommended): processing happens on your device — prompts stay on-device.',
+  },
+  'settings.modelDataCloud': {
+    pl: 'Model chmurowy: zapytania są przesyłane do usługi w chmurze w celu przetworzenia — nie podawaj danych wrażliwych.',
+    en: 'Cloud model: prompts are sent to a cloud service for processing — avoid sharing sensitive data.',
+  },
 
   // === ChatPanel ===
   'chat.thinking': { pl: 'Myślę...', en: 'Thinking...' },
