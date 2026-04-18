@@ -31,24 +31,21 @@ def get_production(file_path: str = DATA_PATH_2):
         return None, f"Brak danych: {e}"
 
 def get_customer_behaviour(file_path: str = DATA_PATH_3):
-    try:
-        df = pd.read_csv(file_path)
-        df_subset = df.head(96).copy()
 
-        json_data = df_subset.to_dict(orient='records')
-        return json_data, df_subset.to_csv(index=False)
-    except Exception as e:
-        return None, f"Brak danych: {e}"
+    df = pd.read_csv(file_path)
+    df_subset = df.head(96).copy()
+
+    json_data = df_subset.to_dict(orient='records')
+    return json_data, df_subset.to_csv(index=False)
+
 
 def get_mock_oze(file_path: str = DATA_PATH_4):
-    try:
-        df = pd.read_csv(file_path)
-        df_subset = df.head(96).copy()
+    df = pd.read_csv(file_path)
+    df_subset = df.head(96).copy()
 
-        json_data = df_subset.to_dict(orient='records')
-        return json_data, df_subset.to_csv(index=False)
-    except Exception as e:
-        return None, f"Brak danych: {e}"
+    json_data = df_subset.to_dict(orient='records')
+    return json_data, df_subset.to_csv(index=False)
+
 
 
 def run_voltus_groq_api(user_prompt: str, model: str = "llama-3.3-70b-versatile"):
@@ -70,34 +67,36 @@ def run_voltus_groq_api(user_prompt: str, model: str = "llama-3.3-70b-versatile"
         url = "https://api.groq.com/openai/v1/chat/completions"
 
         system_prompt = f"""Jesteś Voltuś, zaawansowany asystent analityczny (AI Copilot) wspierający pracowników TAURONA.
-        Twoim zadaniem jest pomóc konsultantowi w szybkiej analizie danych rynkowych i produkcyjnych, aby mógł lepiej doradzać klientom.
-        Jesteś w pełni profesjonalny, precyzyjny i opierasz się na twardych danych.
+            Twoim zadaniem jest pomóc konsultantowi w szybkiej analizie danych rynkowych i produkcyjnych, aby mógł lepiej doradzać klientom.
+            Jesteś w pełni profesjonalny, precyzyjny i opierasz się na twardych danych.
 
-        Zasady analizy, którymi się kierujesz:
-        1. Szybkie Podsumowanie (Executive Summary): Wyłap z danych ekstrema – podaj konsultantowi na tacy, o której godzinie energia jest drastycznie droga, a kiedy drastycznie tania (lub ujemna).
-        2. Wskazówki DSR (Demand Side Response): Podpowiedz pracownikowi, co ma powiedzieć klientowi, aby zrównoważyć sieć (np. "Zaproponuj klientowi przesunięcie energochłonnych procesów na godzinę 13:00").
-        3. Świadomość OZE: Zwracaj uwagę na nadpodaż z wiatru i słońca, która powoduje spadki cen.
+            Zasady analizy, którymi się kierujesz:
+            1. Szybkie Podsumowanie: Wyłap z danych ekstrema.
+            2. Wskazówki DSR: Podpowiedz pracownikowi, co ma powiedzieć klientowi.
+            3. Świadomość OZE: Zwracaj uwagę na nadpodaż z wiatru i słońca.
 
-        Dane: {csv_context} {production_context} {customer_context} {mock_oze_context}
-        
-        Jeśli zostaniesz poproszony o wygenerowanie raportu, to wygeneruj według uznania podstawowy raport.
-        SCHEMAT RAPORTU:
-        {{
-            "Autor":"Voltuś",
-            "Timestamp":"Tutaj podajesz obecną godzinę minuty itd..."
-            
-            "Treść":"W tym miejscu ma być raport na podstawie zapytania użytkownika. Ma on zawierać jak przeprowadzałeś analizę tematu, wyniki, wnioski, ewentulanie jakieś tabelki/ wykresy"
-        }}
-        Jeśli poproszony zostaniesz o wygenerowanie samego wykresu, wyślij dane do wykresu jako JSON.
-        
+            Dane dla Ciebie: 
+            RCE: {csv_context}
+            Produkcja: {production_context}
+            Klienci: {customer_context}
+            Mock OZE: {mock_oze_context}
 
-        ODPOWIADAJ TYLKO W FORMACIE JSON według poniższego schematu:
-        {{
-            "podsumowanie_dla_pracownika": "Krótki alert, co dzieje się na rynku w ciągu najbliższych 24h",
-            "rekomendacja_dsr": "Co konkretnie konsultant ma powiedzieć/zaproponować klientowi",
-            "uzasadnienie_analityczne": "Wyjaśnienie, jak produkcja OZE wpłynęła na cenę RCE w kluczowej godzinie"
-        }}
-        """
+            ODPOWIADAJ TYLKO W FORMACIE JSON.
+            Zawsze musisz zwrócić podstawowe pola podsumowania. 
+            Jeśli dodatkowo w prompcie użytkownika zostaniesz poproszony o raport, wypełnij też obiekt "raport" (w przeciwnym razie zostaw go jako null).
+
+            SCHEMAT JSON, którego MUSISZ użyć:
+            {{
+                "podsumowanie_dla_pracownika": "Krótki alert, co dzieje się na rynku w ciągu najbliższych 24h",
+                "rekomendacja_dsr": "Co konkretnie konsultant ma powiedzieć/zaproponować klientowi",
+                "uzasadnienie_analityczne": "Wyjaśnienie zjawiska na podstawie danych",
+                "raport": {{
+                    "Autor": "Voltuś",
+                    "Timestamp": "Obecna data i czas",
+                    "Tresc": "Szczegółowy raport analityczny z wnioskami na podstawie danych."
+                }}
+            }}
+            """
 
         headers = {
             "Authorization": f"Bearer {api_key}",
@@ -110,17 +109,13 @@ def run_voltus_groq_api(user_prompt: str, model: str = "llama-3.3-70b-versatile"
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            "response_format": {"type": "json_object"},  # Groq wie, że musi zwrócić poprawnego JSON-a
+            "response_format": {"type": "json_object"},
             "temperature": 0.5
         }
 
         response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()  # Lepsze wyłapywanie błędów HTTP
 
-        # Zabezpieczenie HTTP
-        if response.status_code != 200:
-            return {"status": "error", "message": f"Błąd serwera Groq ({response.status_code}): {response.text}"}
-
-        # Wyciąganie odpowiedzi (struktura zapożyczona z OpenAI/Groq, nie z Ollamy)
         ai_response_text = response.json()["choices"][0]["message"]["content"]
 
         try:
@@ -128,20 +123,20 @@ def run_voltus_groq_api(user_prompt: str, model: str = "llama-3.3-70b-versatile"
         except json.JSONDecodeError:
             return {"status": "error", "message": "Model nie zwrócił poprawnego formatu JSON."}
 
-        # --- LEGAL FROM DAY ONE DLA PRACOWNIKA ---
-        internal_compliance = "Wytyczna Legal: Rekomendacje oparte na przewidywaniach RCE są zmienne. Kategorycznie zabrania się pracownikom gwarantowania klientom stałych stóp zwrotu lub stałych rachunków na podstawie tego wykresu."
-        data_lineage = "Dane pobrano ze źródeł: PSE (Rynkowa Cena Energii) oraz estymacji Generacji OZE. Zanonimizowano dane klienta (Brak PII)."
+        internal_compliance = "Wytyczna Legal: Rekomendacje oparte na przewidywaniach RCE są zmienne. Kategorycznie zabrania się pracownikom gwarantowania klientom stałych stóp zwrotu."
+        data_lineage = "Dane pobrano ze źródeł: PSE oraz estymacji Generacji OZE."
 
-        # Budowanie finalnego wielkiego obiektu JSON
+        # --- ZMIANA TUTAJ: WYCIĄGAMY RAPORT ---
         final_output = {
             "status": "success",
             "ui_components": {
                 "ai_copilot_panel": {
-                    "executive_summary": ai_data.get("podsumowanie_dla_pracownika", "Brak danych"),
-                    "dsr_action": ai_data.get("rekomendacja_dsr", "Brak danych")
+                    "executive_summary": ai_data.get("podsumowanie_dla_pracownika", "Brak danych summary"),
+                    "dsr_action": ai_data.get("rekomendacja_dsr", "Brak danych dsr")
                 },
-                "explainable_ai": ai_data.get("uzasadnienie_analityczne", "Analiza heurystyczna")
+                "explainable_ai": ai_data.get("uzasadnienie_analityczne", "Brak uzasadnienia")
             },
+            "generowany_raport": ai_data.get("raport", None),  # <-- PYTHON TERAZ TO WIDZI!
             "datasets": {
                 "rce_chart_data": json_payload,
                 "production_chart_data": production_payload
@@ -161,5 +156,5 @@ def run_voltus_groq_api(user_prompt: str, model: str = "llama-3.3-70b-versatile"
 
 
 if __name__ == "__main__":
-    result = run_voltus_groq_api("Zrób analizę na najbliższe 24h. Na co mam uważać przy kliencie PV?")
+    result = run_voltus_groq_api("Zrób raport o produkcji prądu")
     print(json.dumps(result, indent=4, ensure_ascii=False))

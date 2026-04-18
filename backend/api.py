@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from mobile_llm import run_pradus_api
 from web_llm import run_voltus_api
+from web_llm_groq import run_voltus_groq_api
 
 app = FastAPI()
 
@@ -13,4 +14,5 @@ def chat_with_pradus(message: str):
 
 @app.get("/api/chat/voltus")
 def chat_with_voltus(message: str):
-    return run_voltus_api(user_prompt=message)
+    #return run_voltus_api(user_prompt=message)
+    return run_voltus_groq_api(user_prompt=message)
