@@ -1933,12 +1933,13 @@ body {
 /* ===== SETTINGS POPUP ===== */
 .settings-wrapper {
     position: relative;
+    width: 100%;
 }
 
 .settings-popup {
     position: absolute;
     bottom: calc(100% + 8px);
-    left: 8px;
+    left: 50%;
     width: 220px;
     background: var(--bg-secondary);
     border: 1px solid var(--border-subtle);
@@ -1948,8 +1949,8 @@ body {
     z-index: 1100;
     pointer-events: none;
     opacity: 0;
-    transform: translateY(8px) scale(0.95);
-    transform-origin: bottom left;
+    transform: translate(-50%, 8px) scale(0.95);
+    transform-origin: bottom center;
     transition:
         opacity 250ms cubic-bezier(0.4, 0, 0.2, 1),
         transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -1958,7 +1959,7 @@ body {
 .settings-popup-open {
     pointer-events: auto;
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate(-50%, 0) scale(1);
 }
 
 .settings-popup-header {
@@ -1974,6 +1975,15 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
+}
+
+.settings-popup-row + .settings-popup-row {
+    margin-top: 12px;
+}
+
+/* Prevent the theme switch from visually colliding with the language switch */
+.settings-popup .theme-toggle {
+    transform: translateY(-2px);
 }
 
 .settings-popup-label {
