@@ -254,6 +254,10 @@ body {
     display: none;
 }
 
+.sidebar.sidebar-collapsed {
+    z-index: 1200;
+}
+
 .sidebar-collapsed .nav-item {
     justify-content: center;
     padding: 14px;
@@ -1960,6 +1964,18 @@ body {
     pointer-events: auto;
     opacity: 1;
     transform: translate(-50%, 0) scale(1);
+}
+
+.sidebar-collapsed .settings-popup {
+    left: calc(100% + 18px);
+    bottom: 8px;
+    z-index: 1300;
+    transform: translate(0, 8px) scale(0.95);
+    transform-origin: bottom left;
+}
+
+.sidebar-collapsed .settings-popup-open {
+    transform: translate(0, 0) scale(1);
 }
 
 .settings-popup-header {
