@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import MapView, { type ViewMode } from './components/MapView';
 import Faceplate from './components/Faceplate';
+import ChatPanel from './components/ChatPanel';
 import { TILE_ORDER } from './data/tileLayers';
 import { PROVINCE_DATA } from './data/provinceData';
 import {
@@ -41,6 +42,13 @@ function App() {
 
   // Facility state
   const [selectedFacility, setSelectedFacility] = useState<EnergyFacility | null>(null);
+
+  // Chat state
+  const [chatOpen, setChatOpen] = useState(false);
+
+  const handleChatToggle = useCallback(() => {
+    setChatOpen(prev => !prev);
+  }, []);
 
   // ===== LOAD DATA =====
   useEffect(() => {
@@ -216,8 +224,10 @@ function App() {
       <Sidebar
         zoomLevel={zoomLevel}
         activeSection={activeSection}
+        chatOpen={chatOpen}
         onNavClick={setActiveSection}
         onFlyToPoland={handleFlyToPoland}
+        onChatToggle={handleChatToggle}
       />
       <main id="main-content" className="main-content">
         <TopBar onSearch={handleSearch} onTileToggle={handleTileToggle} />
@@ -252,6 +262,7 @@ function App() {
             activeCounty={activeCounty}
             facility={selectedFacility}
           />
+          <ChatPanel open={chatOpen} onClose={handleChatToggle} />
         </div>
       </main>
     </div>
