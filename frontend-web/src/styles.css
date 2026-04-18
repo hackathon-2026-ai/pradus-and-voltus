@@ -1134,8 +1134,9 @@ body {
 
 /* Wind — spinning blade */
 .pin-anim-wind {
-    animation: pulse-sun 1s ease-in-out infinite;
+    /* animation: pulse-sun 1s ease-in-out infinite; */
     /* animation: spin-blade 2s linear infinite; */
+    filter: invert(1);
 }
 
 @keyframes spin-blade {
