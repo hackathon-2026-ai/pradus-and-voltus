@@ -5,10 +5,10 @@ gunicorn
 python-dotenv
 ollama
 requests
-json
 matplotlib
 fastapi
 openmeteo_requests
+pandas
 pytz
 requests_cache
 retry_requests

@@ -2,65 +2,53 @@ import requests
 import pandas as pd
 import json
 import os
+import re
 from config import DATA_PATH, DATA_PATH_2
 
-
-def get_data_json(
-        file_path: str = DATA_PATH):
+def get_data_json(file_path: str = DATA_PATH):
     try:
         df = pd.read_excel(file_path)
-        df_subset = df.head(96).copy()
-
+        # Zmniejszamy do 24h, żeby mały model AI lepiej analizował
+        df_subset = df.head(24).copy()
         json_data = df_subset.to_dict(orient='records')
         return json_data, df_subset.to_csv(index=False)
     except Exception as e:
-        return None, f"Brak danych: {e}"
-
+        print(f"🚨 BŁĄD PANDASA (Excel): {e}")
+        return [], f"Brak danych: {e}"
 
 def get_production(file_path: str = DATA_PATH_2):
     try:
         df = pd.read_csv(file_path)
-        df_subset = df.head(96).copy()
-
+        df_subset = df.head(24).copy()
         json_data = df_subset.to_dict(orient='records')
         return json_data, df_subset.to_csv(index=False)
-
     except Exception as e:
-        return None, f"Brak danych: {e}"
-
+        print(f"🚨 BŁĄD PANDASA (CSV): {e}")
+        return [], f"Brak danych: {e}"
 
 def run_voltus_api(user_prompt: str, model: str = "gemma4:e2b"):
     json_payload, csv_context = get_data_json()
     production_payload, production_context = get_production()
 
-    try:
-        # 1. Wysyłamy zapytanie do LLM o analizę (tak jak wcześniej)
-        url = "http://localhost:11434/api/chat"
-        system_prompt = f"""Jesteś Voltuś, zaawansowany asystent analityczny (AI Copilot) wspierający pracowników TAURONA.
-        Twoim zadaniem jest pomóc konsultantowi w szybkiej analizie danych rynkowych i produkcyjnych, aby mógł lepiej doradzać klientom.
-        Jesteś w pełni profesjonalny, precyzyjny i opierasz się na twardych danych.
-        
-        Zasady analizy, którymi się kierujesz:
-        1. Szybkie Podsumowanie (Executive Summary): Wyłap z danych ekstrema – podaj konsultantowi na tacy, o której godzinie energia jest drastycznie droga, a kiedy drastycznie tania (lub ujemna).
-        2. Wskazówki DSR (Demand Side Response): Podpowiedz pracownikowi, co ma powiedzieć klientowi, aby zrównoważyć sieć (np. "Zaproponuj klientowi przesunięcie energochłonnych procesów na godzinę 13:00").
-        3. Świadomość OZE: Zwracaj uwagę na nadpodaż z wiatru i słońca, która powoduje spadki cen.
-        
-        Został już wygenerowany wykres z poniższymi danymi rynkowymi (RCE), który konsultant widzi na swoim ekranie.
-        Przeanalizuj powyższe dane, odwołaj się do wygenerowanego wykresu i odpowiedz na pytanie konsultanta. Nie cytuj całej tabeli.
-        Dane: {csv_context} {production_context}
+    print(f"🔍 DEBUG: Załadowano {len(json_payload)} wierszy Excel i {len(production_payload)} CSV")
 
-        ODPOWIADAJ
-        TYLKO
-        W
-        FORMACIE
-        JSON
-        według
-        poniższego
-        schematu:
+    try:
+        url = "http://localhost:11434/api/chat"
+        system_prompt = f"""Jesteś Voltuś, ekspert energetyczny TAURONA.
+        
+        DANE (ostatnie 24h):
+        Ceny RCE: {csv_context}
+        Produkcja OZE (Wiatr/Słońce): {production_context}
+
+        ZADANIE:
+        Przeanalizuj dane i odpowiedz na pytanie użytkownika. 
+        Jeśli w danych nie ma odpowiedzi (np. pytania o regiony/województwa), wyjaśnij to krótko.
+
+        ODPOWIADAJ WYŁĄCZNIE W FORMACIE JSON:
         {{
-            "podsumowanie_dla_pracownika": "Krótki alert, co dzieje się na rynku w ciągu najbliższych 24h",
-            "rekomendacja_dsr": "Co konkretnie konsultant ma powiedzieć/zaproponować klientowi",
-            "uzasadnienie_analityczne": "Wyjaśnienie, jak produkcja OZE wpłynęła na cenę RCE w kluczowej godzinie"
+            "summary": "Krótkie podsumowanie analizy lub informacja o braku danych.",
+            "action": "Konkretna porada dla klienta (DSR).",
+            "analysis": "Techniczne uzasadnienie (wpływ OZE na cenę)."
         }}
         """
 
@@ -71,55 +59,53 @@ def run_voltus_api(user_prompt: str, model: str = "gemma4:e2b"):
                 {"role": "user", "content": user_prompt}
             ],
             "stream": False,
-            "format": "json" # <-- Wymuszamy JSON z Ollamy!
+            "format": "json"
         }
 
         response = requests.post(url, json=payload)
-
-        # Zabezpieczenie HTTP
         if response.status_code != 200:
-            return {"status": "error", "message": f"Błąd serwera Ollama ({response.status_code}): {response.text}"}
+            return {"status": "error", "message": f"Błąd Ollama: {response.status_code}"}
 
-        # Wyciąganie odpowiedzi i zmuszanie Pythona do jej odczytania jako JSON
-        ai_response_text = response.json()["message"]["content"]
+        ai_raw_content = response.json()["message"]["content"]
+        
+        # --- KULOODPORNY PARSER ---
+        # 1. Czyścimy komentarze, których Python nie lubi
+        clean_content = re.sub(r'//.*', '', ai_raw_content)
+        
+        # 2. Szukamy klamerek JSON
+        match = re.search(r'\{.*\}', clean_content, re.DOTALL)
+        
+        if match:
+            try:
+                ai_data = json.loads(match.group(0))
+            except json.JSONDecodeError:
+                ai_data = {"summary": ai_raw_content}
+        else:
+            ai_data = {"summary": ai_raw_content}
 
-        try:
-            ai_data = json.loads(ai_response_text)
-        except json.JSONDecodeError:
-            return {"status": "error", "message": "Model nie zwrócił poprawnego formatu JSON."}
+        # --- MAPOWANIE NA FORMAT FRONTENDU ---
+        summary = ai_data.get("summary") or ai_data.get("podsumowanie_dla_pracownika") or "Brak podsumowania"
+        action = ai_data.get("action") or ai_data.get("rekomendacja_dsr") or "Brak zaleceń"
+        analysis = ai_data.get("analysis") or ai_data.get("uzasadnienie_analityczne") or "Analiza trendów"
 
-        # --- LEGAL FROM DAY ONE DLA PRACOWNIKA ---
-        internal_compliance = "Wytyczna Legal: Rekomendacje oparte na przewidywaniach RCE są zmienne. Kategorycznie zabrania się pracownikom gwarantowania klientom stałych stóp zwrotu lub stałych rachunków na podstawie tego wykresu."
-        data_lineage = "Dane pobrano ze źródeł: PSE (Rynkowa Cena Energii) oraz estymacji Generacji OZE. Zanonimizowano dane klienta (Brak PII)."
-
-        # Budowanie finalnego wielkiego obiektu JSON
-        final_output = {
+        return {
             "status": "success",
             "ui_components": {
                 "ai_copilot_panel": {
-                    "executive_summary": ai_data.get("podsumowanie_dla_pracownika", "Brak danych"),
-                    "dsr_action": ai_data.get("rekomendacja_dsr", "Brak danych")
+                    "executive_summary": summary,
+                    "dsr_action": action
                 },
-                "explainable_ai": ai_data.get("uzasadnienie_analityczne", "Analiza heurystyczna")
+                "explainable_ai": analysis
             },
             "datasets": {
                 "rce_chart_data": json_payload,
                 "production_chart_data": production_payload
             },
             "compliance_and_legal": {
-                "internal_guideline": internal_compliance,
-                "data_lineage": data_lineage
+                "internal_guideline": "Wytyczna Legal: Rekomendacje są zmienne. Zakaz gwarantowania zysków.",
+                "data_lineage": "Dane: PSE oraz ENTSO-E."
             }
         }
 
-        return final_output
-
     except Exception as e:
         return {"status": "error", "message": str(e)}
-
-
-'''
-if __name__ == "__main__":
-    result = run_voltus_api("Zrób analizę na najbliższe 24h.")
-    # Wyświetlamy sformatowany JSON
-    print(json.dumps(result, indent=4, ensure_ascii=False))'''
