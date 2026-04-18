@@ -10,6 +10,237 @@ interface ChatPanelProps {
   onClose: () => void;
 }
 
+interface Obstacle {
+  x: number;
+  width: number;
+  height: number;
+}
+
+const DINO_VIEW_WIDTH = 300;
+const DINO_VIEW_HEIGHT = 96;
+const DINO_GROUND_Y = 76;
+const DINO_RUNNER_X = 26;
+const DINO_RUNNER_W = 18;
+const DINO_RUNNER_H = 22;
+const DINO_GRAVITY = 1050;
+const DINO_JUMP_VELOCITY = 390;
+
+const ThinkingMiniGame: FC<{ active: boolean }> = ({ active }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const lastFrameTimeRef = useRef<number>(0);
+  const scoreAccumulatorRef = useRef<number>(0);
+  const scoreEmitAccumulatorRef = useRef<number>(0);
+  const runnerLiftRef = useRef<number>(0);
+  const runnerVelocityRef = useRef<number>(0);
+  const spawnTimerRef = useRef<number>(0.8);
+  const obstacleSpeedRef = useRef<number>(170);
+  const obstaclesRef = useRef<Obstacle[]>([]);
+  const crashedRef = useRef<boolean>(false);
+
+  const [score, setScore] = useState(0);
+  const [bestScore, setBestScore] = useState(0);
+  const [crashed, setCrashed] = useState(false);
+
+  const resetGame = () => {
+    scoreAccumulatorRef.current = 0;
+    scoreEmitAccumulatorRef.current = 0;
+    runnerLiftRef.current = 0;
+    runnerVelocityRef.current = 0;
+    spawnTimerRef.current = 0.75;
+    obstacleSpeedRef.current = 170;
+    obstaclesRef.current = [];
+    crashedRef.current = false;
+    setScore(0);
+    setCrashed(false);
+  };
+
+  const jump = () => {
+    if (!active) return;
+
+    if (crashedRef.current) {
+      resetGame();
+      return;
+    }
+
+    if (runnerLiftRef.current <= 0.5) {
+      runnerVelocityRef.current = DINO_JUMP_VELOCITY;
+    }
+  };
+
+  useEffect(() => {
+    if (!active) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.code === 'Space' || event.code === 'ArrowUp' || event.code === 'KeyW') {
+        event.preventDefault();
+        jump();
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [active]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !active) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+    canvas.width = DINO_VIEW_WIDTH * dpr;
+    canvas.height = DINO_VIEW_HEIGHT * dpr;
+    canvas.style.width = `${DINO_VIEW_WIDTH}px`;
+    canvas.style.height = `${DINO_VIEW_HEIGHT}px`;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    resetGame();
+    lastFrameTimeRef.current = 0;
+
+    const draw = () => {
+      ctx.clearRect(0, 0, DINO_VIEW_WIDTH, DINO_VIEW_HEIGHT);
+
+      // Subtle game backdrop tied to the chat palette.
+      const bgGradient = ctx.createLinearGradient(0, 0, 0, DINO_VIEW_HEIGHT);
+      bgGradient.addColorStop(0, 'rgba(34, 211, 238, 0.08)');
+      bgGradient.addColorStop(1, 'rgba(10, 14, 26, 0)');
+      ctx.fillStyle = bgGradient;
+      ctx.fillRect(0, 0, DINO_VIEW_WIDTH, DINO_VIEW_HEIGHT);
+
+      // Ground line and dashes.
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.55)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, DINO_GROUND_Y + 0.5);
+      ctx.lineTo(DINO_VIEW_WIDTH, DINO_GROUND_Y + 0.5);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(100, 116, 139, 0.7)';
+      for (let i = 0; i < DINO_VIEW_WIDTH; i += 22) {
+        const dashOffset = (scoreAccumulatorRef.current * 2) % 22;
+        ctx.fillRect(i - dashOffset, DINO_GROUND_Y + 6, 10, 2);
+      }
+
+      // Obstacles.
+      ctx.fillStyle = 'rgba(244, 63, 94, 0.9)';
+      obstaclesRef.current.forEach((obstacle) => {
+        const y = DINO_GROUND_Y - obstacle.height;
+        ctx.fillRect(obstacle.x, y, obstacle.width, obstacle.height);
+      });
+
+      // Runner.
+      const runnerY = DINO_GROUND_Y - DINO_RUNNER_H - runnerLiftRef.current;
+      ctx.fillStyle = crashedRef.current ? 'rgba(248, 113, 113, 0.95)' : 'rgba(34, 211, 238, 0.95)';
+      ctx.fillRect(DINO_RUNNER_X, runnerY, DINO_RUNNER_W, DINO_RUNNER_H);
+
+      // Eye.
+      ctx.fillStyle = 'rgba(10, 14, 26, 0.95)';
+      ctx.fillRect(DINO_RUNNER_X + 12, runnerY + 5, 2, 2);
+    };
+
+    const tick = (timestamp: number) => {
+      if (!lastFrameTimeRef.current) {
+        lastFrameTimeRef.current = timestamp;
+      }
+
+      const dt = Math.min(0.033, (timestamp - lastFrameTimeRef.current) / 1000);
+      lastFrameTimeRef.current = timestamp;
+
+      if (!crashedRef.current) {
+        obstacleSpeedRef.current = Math.min(320, 170 + scoreAccumulatorRef.current * 1.8);
+
+        runnerVelocityRef.current -= DINO_GRAVITY * dt;
+        runnerLiftRef.current = Math.max(0, runnerLiftRef.current + runnerVelocityRef.current * dt);
+        if (runnerLiftRef.current === 0 && runnerVelocityRef.current < 0) {
+          runnerVelocityRef.current = 0;
+        }
+
+        spawnTimerRef.current -= dt;
+        if (spawnTimerRef.current <= 0) {
+          const heights = [16, 22, 28, 34];
+          const widths = [10, 12, 14, 18];
+          const randomHeight = heights[Math.floor(Math.random() * heights.length)];
+          const randomWidth = widths[Math.floor(Math.random() * widths.length)];
+          obstaclesRef.current.push({
+            x: DINO_VIEW_WIDTH + 12,
+            width: randomWidth,
+            height: randomHeight,
+          });
+          spawnTimerRef.current = 0.7 + Math.random() * 0.9;
+        }
+
+        obstaclesRef.current = obstaclesRef.current
+          .map(obstacle => ({
+            ...obstacle,
+            x: obstacle.x - obstacleSpeedRef.current * dt,
+          }))
+          .filter(obstacle => obstacle.x + obstacle.width > -4);
+
+        const runnerTop = DINO_GROUND_Y - DINO_RUNNER_H - runnerLiftRef.current;
+        const runnerBottom = runnerTop + DINO_RUNNER_H;
+        const runnerLeft = DINO_RUNNER_X;
+        const runnerRight = DINO_RUNNER_X + DINO_RUNNER_W;
+
+        const collided = obstaclesRef.current.some((obstacle) => {
+          const obstacleTop = DINO_GROUND_Y - obstacle.height;
+          const obstacleBottom = DINO_GROUND_Y;
+          const obstacleLeft = obstacle.x;
+          const obstacleRight = obstacle.x + obstacle.width;
+
+          return (
+            runnerLeft < obstacleRight &&
+            runnerRight > obstacleLeft &&
+            runnerTop < obstacleBottom &&
+            runnerBottom > obstacleTop
+          );
+        });
+
+        if (collided) {
+          crashedRef.current = true;
+          setCrashed(true);
+          setBestScore((prev) => Math.max(prev, Math.floor(scoreAccumulatorRef.current)));
+        } else {
+          scoreAccumulatorRef.current += dt * 12;
+          scoreEmitAccumulatorRef.current += dt;
+          if (scoreEmitAccumulatorRef.current >= 0.12) {
+            scoreEmitAccumulatorRef.current = 0;
+            setScore(Math.floor(scoreAccumulatorRef.current));
+          }
+        }
+      }
+
+      draw();
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+      rafRef.current = null;
+    };
+  }, [active]);
+
+  if (!active) return null;
+
+  return (
+    <div className="chat-dino" role="status" aria-live="polite" onMouseDown={jump}>
+      <div className="chat-dino-head">
+        <span className="chat-dino-title">Mini game while Voltuś thinks</span>
+        <span className="chat-dino-score">Score {score} | Best {bestScore}</span>
+      </div>
+      <canvas ref={canvasRef} className="chat-dino-canvas" />
+      <div className="chat-dino-hint">
+        Press Space / Arrow Up / W or click to jump{crashed ? ' | Crashed - jump to retry' : ''}
+      </div>
+    </div>
+  );
+};
+
 const RAW_API_BASE = import.meta.env.VITE_API_BASE_URL as unknown;
 const API_BASE = (typeof RAW_API_BASE === 'string' && RAW_API_BASE.trim() ? RAW_API_BASE : '/api').replace(/\/$/, '');
 
@@ -141,7 +372,7 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
     }
   };
 
-  const hasResponses = messages.some(m => m.role === 'assistant');
+  const hasActivity = messages.length > 0 || isLoading;
 
   return (
     <div className={`chat-panel${open ? ' chat-panel-open' : ''}${expanded ? ' chat-panel-expanded' : ''}`}>
@@ -149,7 +380,7 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
         {/* Header */}
         <div className="chat-header">
           <div className="chat-header-left">
-            <div className={`chat-avatar ${hasResponses ? 'has-video' : ''}`}></div>
+            <div className={`chat-avatar ${hasActivity ? 'has-video' : ''}`}></div>
             <div>
               <div className="chat-title">Voltuś AI</div>
               <div className="chat-status">
@@ -178,7 +409,7 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
         </div>
 
         {/* The Animating Video */}
-        <div className={`chat-ziutek-absolute ${hasResponses ? 'in-header' : ''}`}>
+        <div className={`chat-ziutek-absolute ${hasActivity ? 'in-header' : ''}`}>
           <video
             className="chat-ziutek-video"
             src="/ziutek/output1.webm"
@@ -192,7 +423,7 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
         {/* Messages area */}
         <div className="chat-messages">
           {/* Ziutek animation placeholder */}
-          {!hasResponses && (
+          {!hasActivity && (
             <div className="chat-ziutek-placeholder" style={{ height: '132px' }} />
           )}
 
@@ -220,6 +451,12 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
               <div className="chat-msg-bubble">{msg.text}</div>
             </div>
           ))}
+
+          {isLoading && (
+            <div className="chat-thinking-game-wrap">
+              <ThinkingMiniGame active={isLoading} />
+            </div>
+          )}
 
           {isLoading && (
             <div className="chat-message chat-message-assistant">
