@@ -109,7 +109,7 @@ const Sidebar: FC<SidebarProps> = ({
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
-          <div className="nav-icon">
+          <div className="nav-icon fancy">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2C6.48 2 2 5.58 2 10c0 2.24 1.12 4.27 2.94 5.72L4 20l4.47-2.24C9.6 17.92 10.78 18 12 18c5.52 0 10-3.58 10-8S17.52 2 12 2z"/>
               <circle cx="8" cy="10" r="1" fill="currentColor" stroke="none"/>
