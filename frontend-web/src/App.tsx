@@ -51,6 +51,30 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [faceplateWidth, setFaceplateWidth] = useState(380);
 
+  // Theme & settings state
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
+
+  const handleThemeToggle = useCallback(() => {
+    setTheme(prev => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      setActiveTile(next === 'light' ? 'light' : 'dark');
+      return next;
+    });
+  }, []);
+
+  const handleSettingsToggle = useCallback(() => {
+    setSettingsOpen(prev => !prev);
+  }, []);
+
+  const handleSettingsClose = useCallback(() => {
+    setSettingsOpen(false);
+  }, []);
+
   const handleChatToggle = useCallback(() => {
     setChatOpen(prev => !prev);
   }, []);
@@ -178,10 +202,11 @@ function App() {
 
   const handleTileToggle = useCallback(() => {
     setActiveTile(prev => {
-      const idx = TILE_ORDER.indexOf(prev);
-      return TILE_ORDER[(idx + 1) % TILE_ORDER.length];
+      const allowed = theme === 'light' ? ['light', 'satellite'] : ['dark', 'satellite'];
+      const idx = allowed.indexOf(prev);
+      return allowed[(idx + 1) % allowed.length];
     });
-  }, []);
+  }, [theme]);
 
   const handleFlyToPoland = useCallback(() => {
     if (viewMode === 'counties') {
@@ -236,11 +261,16 @@ function App() {
         chatOpen={chatOpen}
         width={sidebarWidth}
         collapsed={sidebarCollapsed}
+        theme={theme}
+        settingsOpen={settingsOpen}
         onNavClick={setActiveSection}
         onFlyToPoland={handleFlyToPoland}
         onChatToggle={handleChatToggle}
         onWidthChange={setSidebarWidth}
         onCollapseToggle={handleSidebarCollapseToggle}
+        onThemeToggle={handleThemeToggle}
+        onSettingsToggle={handleSettingsToggle}
+        onSettingsClose={handleSettingsClose}
       />
       <main id="main-content" className="main-content">
         <TopBar onSearch={handleSearch} onTileToggle={handleTileToggle} />
