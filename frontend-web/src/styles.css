@@ -2576,7 +2576,22 @@ body {
     white-space: nowrap;
 }
 
+.chat-dino-visual {
+    position: relative;
+}
+
+.chat-dino-decor {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+}
+
 .chat-dino-canvas {
+    position: relative;
+    z-index: 2;
     display: block;
     width: 100%;
     max-width: 300px;
@@ -2585,6 +2600,80 @@ body {
     border-radius: 8px;
     background: rgba(10, 14, 26, 0.55);
     border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.chat-dino-countdown {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.chat-dino-countdown::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    background: rgba(10, 14, 26, 0.45);
+}
+
+.chat-dino-countdown-number {
+    position: relative;
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    color: var(--text-primary);
+    text-shadow:
+      0 0 18px rgba(244, 63, 94, 0.22),
+      0 0 18px rgba(34, 211, 238, 0.18);
+}
+
+.chat-dino.is-crashed .chat-dino-canvas {
+    filter: grayscale(0.9) brightness(0.85);
+}
+
+.chat-dino.is-crashed .chat-dino-decor {
+    opacity: 0.55;
+}
+
+.chat-dino-gameover {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.chat-dino-gameover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    background: rgba(10, 14, 26, 0.45);
+}
+
+.chat-dino-gameover-inner {
+    position: relative;
+    text-align: center;
+}
+
+.chat-dino-gameover-title {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    color: var(--text-primary);
+}
+
+.chat-dino-gameover-subtitle {
+    margin-top: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
 }
 
 .chat-dino-hint {

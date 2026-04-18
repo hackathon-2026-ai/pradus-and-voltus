@@ -10,24 +10,124 @@ interface ChatPanelProps {
   onClose: () => void;
 }
 
+type ObstacleVariant = 'warningSign' | 'dangerPlug' | 'faultTower';
+
 interface Obstacle {
   x: number;
   width: number;
   height: number;
+  variant: ObstacleVariant;
 }
 
 const DINO_VIEW_WIDTH = 300;
 const DINO_VIEW_HEIGHT = 96;
 const DINO_GROUND_Y = 76;
 const DINO_RUNNER_X = 26;
-const DINO_RUNNER_W = 18;
-const DINO_RUNNER_H = 22;
+const DINO_RUNNER_HITBOX_W = 16;
+const DINO_RUNNER_HITBOX_H = 22;
+const DINO_RUNNER_DRAW_W = 30;
+const DINO_RUNNER_DRAW_H = 34;
 const DINO_GRAVITY = 1050;
 const DINO_JUMP_VELOCITY = 390;
 
-const ThinkingMiniGame: FC<{ active: boolean }> = ({ active }) => {
+function createSvgImage(svgMarkup: string): HTMLImageElement {
+  const image = new Image();
+  image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgMarkup)}`;
+  return image;
+}
+
+const RUNNER_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
+  <defs>
+    <linearGradient id="voltusBody" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f3f4f6"/>
+      <stop offset="1" stop-color="#9ca3af"/>
+    </linearGradient>
+    <linearGradient id="voltusEdge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#0f172a" stop-opacity="0.18"/>
+    </linearGradient>
+    <radialGradient id="voltusGlow" cx="30%" cy="20%" r="80%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Body (Voltuś) -->
+  <rect x="8" y="3" width="24" height="34" rx="11" fill="url(#voltusBody)"/>
+  <rect x="8" y="3" width="24" height="34" rx="11" fill="url(#voltusEdge)"/>
+  <ellipse cx="18" cy="10" rx="11" ry="9" fill="url(#voltusGlow)"/>
+
+  <!-- Pink collar/band -->
+  <rect x="8" y="20" width="24" height="6" rx="3" fill="#ec4899"/>
+  <rect x="10" y="21.3" width="20" height="3.4" rx="1.7" fill="#f472b6"/>
+  <rect x="16" y="19.2" width="8" height="8" rx="3" fill="#111827" fill-opacity="0.55"/>
+  <path d="M18 22.4 L20 24.8 L22 22.4" fill="none" stroke="#22d3ee" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Face (bigger, more expressive) -->
+  <ellipse cx="16.5" cy="14" rx="4.2" ry="4.6" fill="#f8fafc"/>
+  <ellipse cx="25" cy="14" rx="4.2" ry="4.6" fill="#f8fafc"/>
+  <ellipse cx="16.9" cy="14.6" rx="2.1" ry="2.3" fill="#111827"/>
+  <ellipse cx="25.4" cy="14.6" rx="2.1" ry="2.3" fill="#111827"/>
+  <circle cx="17.6" cy="13.9" r="0.7" fill="#ffffff"/>
+  <circle cx="26.1" cy="13.9" r="0.7" fill="#ffffff"/>
+  <path d="M13.5 10.8 Q16 9.2 18.6 10.6" fill="none" stroke="#6b7280" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M22.8 10.6 Q25.4 9.2 27.8 10.8" fill="none" stroke="#6b7280" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M16 27 Q20 29.5 24 27" fill="none" stroke="#4b5563" stroke-width="1.9" stroke-linecap="round"/>
+
+  <!-- Tiny arms/legs to read like the mascot -->
+  <path d="M8.5 24.5 Q5.5 26 7.3 29" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
+  <path d="M31.5 24.5 Q34.5 26 32.7 29" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/>
+  <path d="M13 36.2 L12 39 M27 36.2 L28 39" stroke="#6b7280" stroke-width="2" stroke-linecap="round"/>
+</svg>
+`;
+
+const OBSTACLE_SVG: Record<ObstacleVariant, string> = {
+  warningSign: `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 34">
+      <path d="M13 2 L24 28 H2 Z" fill="#f43f5e" stroke="#fb7185" stroke-width="1.4"/>
+      <path d="M13 7 L9.3 16.3 H12.6 L10.8 24.5 L17.4 13.4 H14.2 Z" fill="#fff1f2"/>
+      <path d="M13 7 L9.3 16.3 H12.6 L10.8 24.5 L17.4 13.4 H14.2 Z" fill="none" stroke="#fecdd3" stroke-width="0.9"/>
+      <rect x="6" y="29" width="14" height="3" rx="1.5" fill="#881337"/>
+    </svg>
+  `,
+  dangerPlug: `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36">
+      <rect x="6" y="10" width="12" height="18" rx="4" fill="#f43f5e" stroke="#fb7185" stroke-width="1.2"/>
+      <rect x="8" y="4" width="3" height="6" rx="1" fill="#fff1f2"/>
+      <rect x="13" y="4" width="3" height="6" rx="1" fill="#fff1f2"/>
+      <path d="M9 14 L15 20" stroke="#fff1f2" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M15 14 L9 20" stroke="#fff1f2" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M12 12 L9.6 18.5 H12.2 L10.7 25 L15.8 16.2 H13.2 Z" fill="#fee2e2" stroke="#fecdd3" stroke-width="0.8"/>
+      <path d="M18.5 11 L20.5 9" stroke="#fee2e2" stroke-width="1.4" stroke-linecap="round"/>
+      <path d="M18.6 14.5 L21 14" stroke="#fee2e2" stroke-width="1.4" stroke-linecap="round"/>
+      <rect x="7" y="29" width="10" height="3" rx="1.5" fill="#881337"/>
+    </svg>
+  `,
+  faultTower: `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 40">
+      <rect x="9" y="9" width="6" height="26" rx="2" fill="#be123c"/>
+      <circle cx="12" cy="8" r="5" fill="#fb7185" fill-opacity="0.35" stroke="#f43f5e" stroke-width="1.6"/>
+      <path d="M12 8 L19 5 M12 8 L5 5 M12 8 L12 1" stroke="#fecdd3" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M10 16 L14 16 M10 22 L14 22 M10 28 L14 28" stroke="#fff1f2" stroke-width="1.4" stroke-linecap="round"/>
+      <path d="M12 18 V26" stroke="#fff1f2" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="12" cy="30" r="1.6" fill="#fff1f2"/>
+      <rect x="7" y="35" width="10" height="3" rx="1.5" fill="#881337"/>
+    </svg>
+  `,
+};
+
+interface ThinkingMiniGameProps {
+  active: boolean;
+  paused: boolean;
+  countdown: number;
+}
+
+const ThinkingMiniGame: FC<ThinkingMiniGameProps> = ({ active, paused, countdown }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number | null>(null);
+  const runnerSpriteRef = useRef<HTMLImageElement | null>(null);
+  const obstacleSpritesRef = useRef<Partial<Record<ObstacleVariant, HTMLImageElement>>>({});
+  const pausedRef = useRef<boolean>(false);
   const lastFrameTimeRef = useRef<number>(0);
   const scoreAccumulatorRef = useRef<number>(0);
   const scoreEmitAccumulatorRef = useRef<number>(0);
@@ -41,6 +141,50 @@ const ThinkingMiniGame: FC<{ active: boolean }> = ({ active }) => {
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
   const [crashed, setCrashed] = useState(false);
+  const [spritesReady, setSpritesReady] = useState(false);
+
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setSpritesReady(false);
+
+    const runner = createSvgImage(RUNNER_SVG);
+    const obstacles: Record<ObstacleVariant, HTMLImageElement> = {
+      warningSign: createSvgImage(OBSTACLE_SVG.warningSign),
+      dangerPlug: createSvgImage(OBSTACLE_SVG.dangerPlug),
+      faultTower: createSvgImage(OBSTACLE_SVG.faultTower),
+    };
+
+    runnerSpriteRef.current = runner;
+    obstacleSpritesRef.current = obstacles;
+
+    const images = [runner, ...Object.values(obstacles)];
+
+    const waitFor = (img: HTMLImageElement) => {
+      if (img.complete) return Promise.resolve();
+
+      if (typeof img.decode === 'function') {
+        return img.decode().catch(() => undefined);
+      }
+
+      return new Promise<void>((resolve) => {
+        const done = () => resolve();
+        img.addEventListener('load', done, { once: true });
+        img.addEventListener('error', done, { once: true });
+      });
+    };
+
+    Promise.all(images.map(waitFor)).then(() => {
+      if (!cancelled) setSpritesReady(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const resetGame = () => {
     scoreAccumulatorRef.current = 0;
@@ -57,6 +201,7 @@ const ThinkingMiniGame: FC<{ active: boolean }> = ({ active }) => {
 
   const jump = () => {
     if (!active) return;
+    if (pausedRef.current) return;
 
     if (crashedRef.current) {
       resetGame();
@@ -84,7 +229,7 @@ const ThinkingMiniGame: FC<{ active: boolean }> = ({ active }) => {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !active) return;
+    if (!canvas || !active || !spritesReady) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -124,20 +269,44 @@ const ThinkingMiniGame: FC<{ active: boolean }> = ({ active }) => {
       }
 
       // Obstacles.
-      ctx.fillStyle = 'rgba(244, 63, 94, 0.9)';
       obstaclesRef.current.forEach((obstacle) => {
         const y = DINO_GROUND_Y - obstacle.height;
-        ctx.fillRect(obstacle.x, y, obstacle.width, obstacle.height);
+        ctx.save();
+        ctx.shadowColor = 'rgba(244, 63, 94, 0.55)';
+        ctx.shadowBlur = 10;
+
+        const obstacleSprite = obstacleSpritesRef.current[obstacle.variant];
+        if (obstacleSprite?.complete && obstacleSprite.naturalWidth > 0) {
+          ctx.drawImage(obstacleSprite, obstacle.x, y, obstacle.width, obstacle.height);
+        } else {
+          ctx.fillStyle = 'rgba(244, 63, 94, 0.95)';
+          ctx.fillRect(obstacle.x, y, obstacle.width, obstacle.height);
+        }
+
+        ctx.restore();
       });
 
-      // Runner.
-      const runnerY = DINO_GROUND_Y - DINO_RUNNER_H - runnerLiftRef.current;
-      ctx.fillStyle = crashedRef.current ? 'rgba(248, 113, 113, 0.95)' : 'rgba(34, 211, 238, 0.95)';
-      ctx.fillRect(DINO_RUNNER_X, runnerY, DINO_RUNNER_W, DINO_RUNNER_H);
-
-      // Eye.
-      ctx.fillStyle = 'rgba(10, 14, 26, 0.95)';
-      ctx.fillRect(DINO_RUNNER_X + 12, runnerY + 5, 2, 2);
+      // Runner (Voltuś-themed sprite).
+      const runnerY = DINO_GROUND_Y - DINO_RUNNER_DRAW_H - runnerLiftRef.current;
+      const runnerSprite = runnerSpriteRef.current;
+      if (runnerSprite?.complete) {
+        ctx.save();
+        ctx.shadowColor = crashedRef.current ? 'rgba(244, 63, 94, 0.35)' : 'rgba(34, 211, 238, 0.35)';
+        ctx.shadowBlur = 10;
+        if (crashedRef.current) {
+          ctx.globalAlpha = 0.8;
+          ctx.filter = 'saturate(0.6)';
+        }
+        ctx.drawImage(runnerSprite, DINO_RUNNER_X - 5, runnerY, DINO_RUNNER_DRAW_W, DINO_RUNNER_DRAW_H);
+        ctx.restore();
+      } else {
+        ctx.save();
+        ctx.shadowColor = crashedRef.current ? 'rgba(244, 63, 94, 0.35)' : 'rgba(34, 211, 238, 0.35)';
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = crashedRef.current ? 'rgba(248, 113, 113, 0.95)' : 'rgba(226, 232, 240, 0.95)';
+        ctx.fillRect(DINO_RUNNER_X, DINO_GROUND_Y - DINO_RUNNER_HITBOX_H - runnerLiftRef.current, DINO_RUNNER_HITBOX_W, DINO_RUNNER_HITBOX_H);
+        ctx.restore();
+      }
     };
 
     const tick = (timestamp: number) => {
@@ -148,7 +317,7 @@ const ThinkingMiniGame: FC<{ active: boolean }> = ({ active }) => {
       const dt = Math.min(0.033, (timestamp - lastFrameTimeRef.current) / 1000);
       lastFrameTimeRef.current = timestamp;
 
-      if (!crashedRef.current) {
+      if (!crashedRef.current && !pausedRef.current) {
         obstacleSpeedRef.current = Math.min(320, 170 + scoreAccumulatorRef.current * 1.8);
 
         runnerVelocityRef.current -= DINO_GRAVITY * dt;
@@ -159,14 +328,17 @@ const ThinkingMiniGame: FC<{ active: boolean }> = ({ active }) => {
 
         spawnTimerRef.current -= dt;
         if (spawnTimerRef.current <= 0) {
-          const heights = [16, 22, 28, 34];
-          const widths = [10, 12, 14, 18];
-          const randomHeight = heights[Math.floor(Math.random() * heights.length)];
-          const randomWidth = widths[Math.floor(Math.random() * widths.length)];
+          const variants: Array<{ variant: ObstacleVariant; width: number; height: number }> = [
+            { variant: 'warningSign', width: 18, height: 26 },
+            { variant: 'dangerPlug', width: 18, height: 28 },
+            { variant: 'faultTower', width: 18, height: 34 },
+          ];
+          const selected = variants[Math.floor(Math.random() * variants.length)];
           obstaclesRef.current.push({
             x: DINO_VIEW_WIDTH + 12,
-            width: randomWidth,
-            height: randomHeight,
+            width: selected.width,
+            height: selected.height,
+            variant: selected.variant,
           });
           spawnTimerRef.current = 0.7 + Math.random() * 0.9;
         }
@@ -178,10 +350,10 @@ const ThinkingMiniGame: FC<{ active: boolean }> = ({ active }) => {
           }))
           .filter(obstacle => obstacle.x + obstacle.width > -4);
 
-        const runnerTop = DINO_GROUND_Y - DINO_RUNNER_H - runnerLiftRef.current;
-        const runnerBottom = runnerTop + DINO_RUNNER_H;
+        const runnerTop = DINO_GROUND_Y - DINO_RUNNER_HITBOX_H - runnerLiftRef.current;
+        const runnerBottom = runnerTop + DINO_RUNNER_HITBOX_H;
         const runnerLeft = DINO_RUNNER_X;
-        const runnerRight = DINO_RUNNER_X + DINO_RUNNER_W;
+        const runnerRight = DINO_RUNNER_X + DINO_RUNNER_HITBOX_W;
 
         const collided = obstaclesRef.current.some((obstacle) => {
           const obstacleTop = DINO_GROUND_Y - obstacle.height;
@@ -223,19 +395,51 @@ const ThinkingMiniGame: FC<{ active: boolean }> = ({ active }) => {
       }
       rafRef.current = null;
     };
-  }, [active]);
+  }, [active, spritesReady]);
 
   if (!active) return null;
 
   return (
-    <div className="chat-dino" role="status" aria-live="polite" onMouseDown={jump}>
+    <div className={`chat-dino${crashed ? ' is-crashed' : ''}`} role="status" aria-live="polite" onMouseDown={jump}>
       <div className="chat-dino-head">
         <span className="chat-dino-title">Mini game while Voltuś thinks</span>
         <span className="chat-dino-score">Score {score} | Best {bestScore}</span>
       </div>
-      <canvas ref={canvasRef} className="chat-dino-canvas" />
+      <div className="chat-dino-visual">
+        <svg className="chat-dino-decor" viewBox="0 0 300 96" aria-hidden="true">
+          <defs>
+            <linearGradient id="dinoSky" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="rgba(34,211,238,0.25)" />
+              <stop offset="1" stopColor="rgba(99,102,241,0.12)" />
+            </linearGradient>
+            <linearGradient id="dinoLine" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stopColor="rgba(34,211,238,0.7)" />
+              <stop offset="1" stopColor="rgba(99,102,241,0.25)" />
+            </linearGradient>
+          </defs>
+          <path d="M0 18 C60 5 110 28 170 14 C220 3 265 17 300 8" fill="none" stroke="url(#dinoLine)" strokeWidth="1.4" />
+          <path d="M20 44 C38 35 48 45 62 40" fill="none" stroke="url(#dinoSky)" strokeWidth="1.2" />
+          <path d="M225 35 C241 27 256 36 272 30" fill="none" stroke="url(#dinoSky)" strokeWidth="1.2" />
+          <circle cx="48" cy="16" r="1.5" fill="rgba(34,211,238,0.5)" />
+          <circle cx="252" cy="14" r="1.5" fill="rgba(167,139,250,0.45)" />
+        </svg>
+        <canvas ref={canvasRef} className="chat-dino-canvas" />
+        {crashed && (
+          <div className="chat-dino-gameover" aria-hidden="true">
+            <div className="chat-dino-gameover-inner">
+              <div className="chat-dino-gameover-title">Game Over</div>
+              <div className="chat-dino-gameover-subtitle">Jump to restart</div>
+            </div>
+          </div>
+        )}
+        {countdown > 0 && (
+          <div className="chat-dino-countdown" aria-hidden="true">
+            <div className="chat-dino-countdown-number">{countdown}</div>
+          </div>
+        )}
+      </div>
       <div className="chat-dino-hint">
-        Press Space / Arrow Up / W or click to jump{crashed ? ' | Crashed - jump to retry' : ''}
+        Press Space / Arrow Up / W or click to jump
       </div>
     </div>
   );
@@ -306,11 +510,17 @@ function getAssistantText(payload: unknown): string {
   return 'Received a response, but no readable assistant text was found.';
 }
 
+type ThinkingPhase = 'idle' | 'thinking' | 'countdown';
+
+const FINISH_COUNTDOWN_STEP_MS = 300;
+
 const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
   const [inputValue, setInputValue] = useState('');
   const [expanded, setExpanded] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [thinkingPhase, setThinkingPhase] = useState<ThinkingPhase>('idle');
+  const [finishCountdown, setFinishCountdown] = useState(0);
+  const [pendingAssistantText, setPendingAssistantText] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -337,15 +547,43 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
   // Auto-scroll on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isLoading]);
+  }, [messages, thinkingPhase]);
+
+  useEffect(() => {
+    if (thinkingPhase !== 'countdown') return;
+    if (finishCountdown <= 0) return;
+
+    const timer = window.setTimeout(() => {
+      setFinishCountdown((prev) => Math.max(0, prev - 1));
+    }, FINISH_COUNTDOWN_STEP_MS);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [thinkingPhase, finishCountdown]);
+
+  useEffect(() => {
+    if (thinkingPhase !== 'countdown') return;
+    if (finishCountdown > 0) return;
+
+    if (pendingAssistantText) {
+      setMessages((prev) => [...prev, { role: 'assistant', text: pendingAssistantText }]);
+    }
+
+    setPendingAssistantText(null);
+    setThinkingPhase('idle');
+  }, [thinkingPhase, finishCountdown, pendingAssistantText]);
 
   const handleSend = async () => {
     const text = inputValue.trim();
     if (!text) return;
+    if (thinkingPhase !== 'idle') return;
 
     setMessages(prev => [...prev, { role: 'user', text }]);
     setInputValue('');
-    setIsLoading(true);
+    setThinkingPhase('thinking');
+    setFinishCountdown(0);
+    setPendingAssistantText(null);
 
     try {
       const response = await fetch(`${API_BASE}/chat/voltus?message=${encodeURIComponent(text)}`, {
@@ -359,20 +597,24 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
 
       if (!response.ok) {
         const fallback = `Request failed with status ${response.status}`;
-        setMessages(prev => [...prev, { role: 'assistant', text: assistantText || fallback }]);
+        setPendingAssistantText(assistantText || fallback);
+        setThinkingPhase('countdown');
+        setFinishCountdown(3);
         return;
       }
 
-      setMessages(prev => [...prev, { role: 'assistant', text: assistantText }]);
+      setPendingAssistantText(assistantText);
+      setThinkingPhase('countdown');
+      setFinishCountdown(3);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error while contacting backend.';
-      setMessages(prev => [...prev, { role: 'assistant', text: `Connection error: ${message}` }]);
-    } finally {
-      setIsLoading(false);
+      setPendingAssistantText(`Connection error: ${message}`);
+      setThinkingPhase('countdown');
+      setFinishCountdown(3);
     }
   };
 
-  const hasActivity = messages.length > 0 || isLoading;
+  const hasActivity = messages.length > 0 || thinkingPhase !== 'idle';
 
   return (
     <div className={`chat-panel${open ? ' chat-panel-open' : ''}${expanded ? ' chat-panel-expanded' : ''}`}>
@@ -385,7 +627,7 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
               <div className="chat-title">Voltuś AI</div>
               <div className="chat-status">
                 <span className="chat-status-dot"></span>
-                {isLoading ? 'Thinking...' : 'Ready'}
+                {thinkingPhase === 'idle' ? 'Ready' : 'Thinking...'}
               </div>
             </div>
           </div>
@@ -452,13 +694,17 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
             </div>
           ))}
 
-          {isLoading && (
+          {thinkingPhase !== 'idle' && (
             <div className="chat-thinking-game-wrap">
-              <ThinkingMiniGame active={isLoading} />
+              <ThinkingMiniGame
+                active
+                paused={false}
+                countdown={thinkingPhase === 'countdown' ? finishCountdown : 0}
+              />
             </div>
           )}
 
-          {isLoading && (
+          {thinkingPhase === 'thinking' && (
             <div className="chat-message chat-message-assistant">
               <div className="chat-msg-avatar">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -487,14 +733,14 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && inputValue.trim()) {
+                if (e.key === 'Enter' && inputValue.trim() && thinkingPhase === 'idle') {
                   handleSend();
                 }
               }}
             />
             <button
-              className={`chat-send${inputValue.trim() ? ' chat-send-active' : ''}`}
-              disabled={!inputValue.trim()}
+              className={`chat-send${inputValue.trim() && thinkingPhase === 'idle' ? ' chat-send-active' : ''}`}
+              disabled={!inputValue.trim() || thinkingPhase !== 'idle'}
               onClick={handleSend}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
