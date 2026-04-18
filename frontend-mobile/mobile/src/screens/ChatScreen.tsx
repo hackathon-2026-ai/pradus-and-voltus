@@ -10,19 +10,10 @@ interface Message {
   text: string;
 }
 
-const AI_RESPONSES = [
-  `Based on current weather conditions, wind farms are operating at approximately 72% efficiency. The strongest output is in the Pomerania region.`,
-  `Poland's total installed capacity across all tracked facilities is approximately 24,000 MW. Coal still represents the largest share at ~60%.`,
-  `The Silesian voivodeship has the highest energy consumption due to its industrial base, with current load factors averaging 78%.`,
-  `Solar parks are performing well today with sunshine index at 0.65. The Witnica Solar Park in Lubuskie is producing 52 MW.`,
-  `Energy storage facilities are currently at 89% charge capacity. The Żarnowiec Battery Storage leads with 200 MW available.`,
-  `Comparing wind vs solar: wind farms average 74% efficiency today due to moderate winds, while solar parks average 68% under partial cloud cover.`,
-];
-
 const SUGGESTIONS = [
   "What's the total energy capacity?",
-  'Compare wind vs solar output',
-  'Which province uses the most energy?',
+  'Please prepare my energy balance for the past week',
+  'Prepare optimisation suggestions',
 ];
 
 export default function ChatScreen() {
@@ -32,23 +23,63 @@ export default function ChatScreen() {
   const [ziutekPhase, setZiutekPhase] = useState<'idle' | 'output2' | 'hidden'>('idle');
   const flatRef = useRef<FlatList>(null);
 
-  const hasResponses = messages.some(m => m.role === 'assistant');
+  // Przeniesiona logika fetchowania
+  const fetchVoltusResponse = async (prompt: string): Promise<string> => {
+    // React Native wymaga pełnego (absolutnego) adresu URL
+    const url = `/api/chat/pradus?message=${encodeURIComponent(prompt)}`;
+    const response = await fetch(url);
 
-  const sendMessage = (text: string) => {
+    if (!response.ok) {
+      throw new Error(`Serwer zwrócił błąd: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (typeof data === 'string') {
+      return data;
+    }
+
+    if (data?.status === 'success') {
+      const summary = data.ui_components?.ai_copilot_panel?.executive_summary ?? '';
+      const dsr = data.ui_components?.ai_copilot_panel?.dsr_action ?? '';
+      const explain = data.explainable_ai ?? '';
+      return [summary, dsr, explain].filter(Boolean).join('\n\n');
+    }
+
+    if (data?.message) {
+      return `${data.status ?? 'error'}: ${data.message}`;
+    }
+
+    return JSON.stringify(data, null, 2);
+  };
+
+  // Zaktualizowana funkcja wysyłająca
+  const sendMessage = async (text: string) => {
     if (!text.trim()) return;
+    
     const userMsg: Message = { id: Date.now().toString(), role: 'user', text: text.trim() };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      const response = AI_RESPONSES[Math.floor(Math.random() * AI_RESPONSES.length)];
-      const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'assistant', text: response };
+    try {
+      const responseText = await fetchVoltusResponse(text);
+      const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'assistant', text: responseText };
+      
       setMessages(prev => [...prev, aiMsg]);
+      
+      // Obsługa animacji (ziutek) - odpala się tylko po udanej odpowiedzi, jeśli była w trybie idle lub ukrytym
+      if (ziutekPhase === 'idle' || ziutekPhase === 'hidden') {
+        setZiutekPhase('output2');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Nieznany błąd';
+      const errorMsg: Message = { id: (Date.now() + 1).toString(), role: 'assistant', text: `Błąd: ${errorMessage}` };
+      
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
       setIsLoading(false);
-      if (ziutekPhase === 'idle') setZiutekPhase('output2');
-      else if (ziutekPhase === 'hidden') setZiutekPhase('output2');
-    }, 2000 + Math.random() * 1500);
+    }
   };
 
   useEffect(() => {

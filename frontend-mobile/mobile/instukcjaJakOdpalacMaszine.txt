@@ -1,0 +1,9 @@
+Generalnie do wersji deweloperskiej aplikacji możecie użyć builda deweloperskiego, albo symulować aplikacje przez expo. 
+Gdybyście chcieli builda deweloperskiego najlatwiej założyć konto na eas i odpalić go w chmurze, ale to więcej zachodu i jak nie potrzebujemy np dostępu do kamery, albo storagey nie ma potrzeby się w to bawić więc napisze wam prostszą metodę.
+
+-w konsoli standardowo doinstalować moduły z package json - "npm i"
+-uruchamiacie serwerek do debugowania "npx expo start" - telefon i komputer muszą być w tej samej sieci
+-generuje wam qr albo dla builda developerskiego, albo dla expo go, jak macie dla builda to dajecie mu "s" w konsoli i robi dla expo go
+-instalujecie aplikacje expo go
+-trzeba chyba na telefonie zrobić ustawienia deweloperskie
+-skanujecie qr, powinno sie wam zacząć bundlować i odpalić aplikacje jak nie zapomniałem o czymś napisać
