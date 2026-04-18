@@ -3,7 +3,7 @@ import pandas as pd
 from dotenv import load_dotenv
 import os
 from pysolar.solar import get_altitude
-from Get_Open_Meteo_API import generate_OpenMeteo_data
+from get_openemeteo_api import generate_OpenMeteo_data
 load_dotenv()
 
 
