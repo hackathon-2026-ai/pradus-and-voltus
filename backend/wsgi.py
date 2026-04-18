@@ -6,5 +6,10 @@ from app.db.seed import seed_data
 app = create_app()
 
 with app.app_context():
-    db.create_all()
-    seed_data()
+    try:
+        db.create_all()
+        seed_data()
+    except Exception as exc:
+        # Allow the app to start even if the database isn't available (e.g. local dev
+        # running only the chat endpoints). Endpoints that require DB may still fail.
+        app.logger.warning("Database init/seed skipped: %s", exc)
