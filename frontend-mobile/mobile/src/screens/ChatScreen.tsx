@@ -20,12 +20,11 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [ziutekPhase, setZiutekPhase] = useState<'idle' | 'output2' | 'hidden'>('idle');
+  // 1. Zmiana: Dodajemy 'output3' i ustawiamy jako domyślny stan
+  const [ziutekPhase, setZiutekPhase] = useState<'output3' | 'idle' | 'output2' | 'hidden'>('output3');
   const flatRef = useRef<FlatList>(null);
 
-  // Przeniesiona logika fetchowania
   const fetchVoltusResponse = async (prompt: string): Promise<string> => {
-    // React Native wymaga pełnego (absolutnego) adresu URL
     const url = `/api/chat/pradus?message=${encodeURIComponent(prompt)}`;
     const response = await fetch(url);
 
@@ -53,7 +52,6 @@ export default function ChatScreen() {
     return JSON.stringify(data, null, 2);
   };
 
-  // Zaktualizowana funkcja wysyłająca
   const sendMessage = async (text: string) => {
     if (!text.trim()) return;
     
@@ -68,8 +66,8 @@ export default function ChatScreen() {
       
       setMessages(prev => [...prev, aiMsg]);
       
-      // Obsługa animacji (ziutek) - odpala się tylko po udanej odpowiedzi, jeśli była w trybie idle lub ukrytym
-      if (ziutekPhase === 'idle' || ziutekPhase === 'hidden') {
+      // 2. Zmiana: Jeśli jesteśmy w dowolnym stanie innym niż output2, przełącz na animację mówienia
+      if (ziutekPhase !== 'output2') {
         setZiutekPhase('output2');
       }
     } catch (error) {
@@ -131,7 +129,26 @@ export default function ChatScreen() {
         contentContainerStyle={styles.messagesContent}
         ListHeaderComponent={() => (
           <View style={styles.welcomeArea}>
-            {/* Ziutek video */}
+            
+            {/* 3. Zmiana: Obsługa początkowej animacji (output3) */}
+            {ziutekPhase === 'output3' && (
+              <Video
+                source={require('../../assets/ziutek/output3.webm')}
+                style={styles.ziutekVideo}
+                shouldPlay
+                isLooping={false} // Odtwarzamy tylko raz
+                isMuted
+                resizeMode={ResizeMode.COVER}
+                onPlaybackStatusUpdate={(status) => {
+                  // Kiedy powitanie się skończy, przechodzimy do animacji idle (output1)
+                  if ('didJustFinish' in status && status.didJustFinish) {
+                    setZiutekPhase('idle');
+                  }
+                }}
+              />
+            )}
+
+            {/* Ziutek video - Idle */}
             {ziutekPhase === 'idle' && (
               <Video
                 source={require('../../assets/ziutek/output1.webm')}
@@ -142,6 +159,8 @@ export default function ChatScreen() {
                 resizeMode={ResizeMode.COVER}
               />
             )}
+
+            {/* Ziutek video - Mówienie po odpowiedzi */}
             {ziutekPhase === 'output2' && (
               <Video
                 source={require('../../assets/ziutek/output2.webm')}
