@@ -117,6 +117,8 @@ const MapView: FC<MapViewProps> = ({
   onCountyClickRef.current = onCountyClick;
   const onFacilityClickRef = useRef(onFacilityClick);
   onFacilityClickRef.current = onFacilityClick;
+  const onMapClickRef = useRef(onMapClick);
+  onMapClickRef.current = onMapClick;
   const countyGeoDataRef = useRef(countyGeoData);
   countyGeoDataRef.current = countyGeoData;
 
@@ -145,7 +147,7 @@ const MapView: FC<MapViewProps> = ({
         featureClickedRef.current = false;
         return;
       }
-      onMapClick();
+      onMapClickRef.current();
     });
 
     mapRef.current = map;
@@ -342,6 +344,15 @@ const MapView: FC<MapViewProps> = ({
 
     countyLayerRef.current = layer;
     map.flyToBounds(layer.getBounds(), { padding: [60, 60], maxZoom: 9, duration: 0.8 });
+
+    // Cleanup: when viewMode changes away from counties (or deps change),
+    // remove county layer so provinces can render cleanly
+    return () => {
+      if (countyLayerRef.current) {
+        map.removeLayer(countyLayerRef.current);
+        countyLayerRef.current = null;
+      }
+    };
   }, [viewMode, activeProvince, countyGeoData]);
 
   // ===== HIGHLIGHT SELECTED COUNTY =====
@@ -384,8 +395,9 @@ const MapView: FC<MapViewProps> = ({
     // Determine which facilities to show
     let facilitiesToShow: EnergyFacility[];
     if (viewMode === 'counties' && activeProvince) {
-      // Province drill-down: show ALL pins for that province
-      facilitiesToShow = ENERGY_FACILITIES.filter(f => f.province === activeProvince);
+      // Province drill-down: show pins for that province, thinned to avoid pile-ups
+      const provinceFacilities = ENERGY_FACILITIES.filter(f => f.province === activeProvince);
+      facilitiesToShow = thinByDistance(provinceFacilities, 0.15);
     } else {
       // Country zoom: thin by distance — max 1 pin per ~0.5 degrees
       facilitiesToShow = thinByDistance(ENERGY_FACILITIES, 0.45);
