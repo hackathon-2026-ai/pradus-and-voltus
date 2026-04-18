@@ -34,7 +34,35 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose: _onClose }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  const handleSend = () => {
+  const fetchVoltusResponse = async (prompt: string) => {
+    const url = `/api/chat/voltus?message=${encodeURIComponent(prompt)}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`Serwer zwrócił błąd: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (typeof data === 'string') {
+      return data;
+    }
+
+    if (data?.status === 'success') {
+      const summary = data.ui_components?.ai_copilot_panel?.executive_summary ?? '';
+      const dsr = data.ui_components?.ai_copilot_panel?.dsr_action ?? '';
+      const explain = data.explainable_ai ?? '';
+      return [summary, dsr, explain].filter(Boolean).join('\n\n');
+    }
+
+    if (data?.message) {
+      return `${data.status ?? 'error'}: ${data.message}`;
+    }
+
+    return JSON.stringify(data, null, 2);
+  };
+
+  const handleSend = async () => {
     const text = inputValue.trim();
     if (!text) return;
 
@@ -42,16 +70,15 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose: _onClose }) => {
     setInputValue('');
     setIsLoading(true);
 
-    // Simulate AI response after a delay
-    setTimeout(() => {
-      const responseKeys = [
-        'chat.response1', 'chat.response2', 'chat.response3',
-        'chat.response4', 'chat.response5', 'chat.response6',
-      ];
-      const key = responseKeys[Math.floor(Math.random() * responseKeys.length)];
-      setMessages(prev => [...prev, { role: 'assistant', text: t(key) }]);
+    try {
+      const responseText = await fetchVoltusResponse(text);
+      setMessages(prev => [...prev, { role: 'assistant', text: responseText }]);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Nieznany błąd';
+      setMessages(prev => [...prev, { role: 'assistant', text: `Błąd: ${errorMessage}` }]);
+    } finally {
       setIsLoading(false);
-    }, 2000 + Math.random() * 1500);
+    }
   };
 
   const hasResponses = messages.some(m => m.role === 'assistant');
