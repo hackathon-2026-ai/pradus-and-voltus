@@ -10,6 +10,7 @@ import {
 } from '../data/weatherService';
 import { ENERGY_FACILITIES } from '../data/energyFacilities';
 import type { ViewMode } from './MapView';
+import { useResizeHandle } from '../hooks/useResizeHandle';
 
 // ===== FACEPLATE MODE =====
 type FaceplateMode = 'region' | 'facility';
@@ -28,6 +29,9 @@ interface FaceplateProps {
   activeCounty: string | null;
   // Facility mode
   facility: EnergyFacility | null;
+  // Resize
+  width: number;
+  onWidthChange: (w: number) => void;
 }
 
 const Faceplate: FC<FaceplateProps> = ({
@@ -43,8 +47,11 @@ const Faceplate: FC<FaceplateProps> = ({
   onCountyClick,
   activeCounty,
   facility,
+  width,
+  onWidthChange,
 }) => {
   const mode: FaceplateMode = facility ? 'facility' : 'region';
+  const onResizeStart = useResizeHandle('left', onWidthChange, 300, 600);
 
   // Animate bars after render (region mode)
   useEffect(() => {
@@ -82,7 +89,11 @@ const Faceplate: FC<FaceplateProps> = ({
     const isHouse = facility.type === 'house';
 
     return (
-      <div id="faceplate" className="faceplate">
+      <div id="faceplate" className="faceplate" style={{ width }}>
+        <div
+          className="resize-handle resize-handle-left"
+          onMouseDown={(e) => onResizeStart(e, width)}
+        />
         <button id="faceplate-close" className="faceplate-close" aria-label="Close" onClick={onClose}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -200,7 +211,11 @@ const Faceplate: FC<FaceplateProps> = ({
   ] : null;
 
   return (
-    <div id="faceplate" className={`faceplate${visible ? '' : ' hidden'}`}>
+    <div id="faceplate" className={`faceplate${visible ? '' : ' hidden'}`} style={{ width }}>
+      <div
+        className="resize-handle resize-handle-left"
+        onMouseDown={(e) => onResizeStart(e, width)}
+      />
       <button id="faceplate-close" className="faceplate-close" aria-label="Close" onClick={onClose}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>

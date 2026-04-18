@@ -1,21 +1,28 @@
 import { type MouseEvent, type FC, useCallback } from 'react';
+import { useResizeHandle } from '../hooks/useResizeHandle';
 
 interface SidebarProps {
   zoomLevel: number;
   activeSection: string;
   chatOpen: boolean;
+  width: number;
+  collapsed: boolean;
   onNavClick: (section: string) => void;
   onFlyToPoland: () => void;
   onChatToggle: () => void;
+  onWidthChange: (w: number) => void;
+  onCollapseToggle: () => void;
 }
 
-const Sidebar: FC<SidebarProps> = ({ zoomLevel, activeSection, chatOpen, onNavClick, onFlyToPoland, onChatToggle }) => {
+const Sidebar: FC<SidebarProps> = ({
+  zoomLevel, activeSection, chatOpen, width, collapsed,
+  onNavClick, onFlyToPoland, onChatToggle, onWidthChange, onCollapseToggle,
+}) => {
 
   const handleNavClick = useCallback((e: MouseEvent<HTMLAnchorElement>, section: string) => {
     e.preventDefault();
     onNavClick(section);
 
-    // Ripple effect
     const item = e.currentTarget;
     const ripple = document.createElement('span');
     ripple.classList.add('ripple');
@@ -38,6 +45,8 @@ const Sidebar: FC<SidebarProps> = ({ zoomLevel, activeSection, chatOpen, onNavCl
     e.currentTarget.style.transform = '';
   }, []);
 
+  const onResizeStart = useResizeHandle('right', onWidthChange, 180, 400);
+
   const navItems = [
     { section: 'map', label: 'Map View', icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
@@ -51,7 +60,11 @@ const Sidebar: FC<SidebarProps> = ({ zoomLevel, activeSection, chatOpen, onNavCl
   ];
 
   return (
-    <nav id="sidebar" className="sidebar">
+    <nav
+      id="sidebar"
+      className={`sidebar${collapsed ? ' sidebar-collapsed' : ''}`}
+      style={{ width: collapsed ? 72 : width }}
+    >
       <div className="sidebar-header">
         <div className="logo">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
@@ -136,7 +149,21 @@ const Sidebar: FC<SidebarProps> = ({ zoomLevel, activeSection, chatOpen, onNavCl
           <span className="nav-label">Settings</span>
           <div className="nav-indicator"></div>
         </a>
+        <button className="sidebar-collapse-btn" onClick={onCollapseToggle} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: collapsed ? 'rotate(180deg)' : undefined, transition: 'transform 300ms ease' }}>
+            <polyline points="11 17 6 12 11 7"/>
+            <polyline points="18 17 13 12 18 7"/>
+          </svg>
+        </button>
       </div>
+
+      {/* Resize handle */}
+      {!collapsed && (
+        <div
+          className="resize-handle resize-handle-right"
+          onMouseDown={(e) => onResizeStart(e, width)}
+        />
+      )}
     </nav>
   );
 };
