@@ -149,11 +149,7 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
         {/* Header */}
         <div className="chat-header">
           <div className="chat-header-left">
-            <div className="chat-avatar">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2C6.48 2 2 5.58 2 10c0 2.24 1.12 4.27 2.94 5.72L4 20l4.47-2.24C9.6 17.92 10.78 18 12 18c5.52 0 10-3.58 10-8S17.52 2 12 2z"/>
-              </svg>
-            </div>
+            <div className={`chat-avatar ${hasResponses ? 'has-video' : ''}`}></div>
             <div>
               <div className="chat-title">Voltuś AI</div>
               <div className="chat-status">
@@ -181,20 +177,23 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
           </button>
         </div>
 
+        {/* The Animating Video */}
+        <div className={`chat-ziutek-absolute ${hasResponses ? 'in-header' : ''}`}>
+          <video
+            className="chat-ziutek-video"
+            src="/ziutek/output1.webm"
+            autoPlay
+            loop
+            muted
+            playsInline
+          />
+        </div>
+
         {/* Messages area */}
         <div className="chat-messages">
-          {/* Ziutek animation — loops until first AI response */}
+          {/* Ziutek animation placeholder */}
           {!hasResponses && (
-            <div className="chat-ziutek-wrapper">
-              <video
-                className="chat-ziutek-video"
-                src="/ziutek/output1.webm"
-                autoPlay
-                loop
-                muted
-                playsInline
-              />
-            </div>
+            <div className="chat-ziutek-placeholder" style={{ height: '132px' }} />
           )}
 
           {messages.length === 0 && (
