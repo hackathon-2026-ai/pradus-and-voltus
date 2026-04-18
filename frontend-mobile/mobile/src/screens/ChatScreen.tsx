@@ -82,7 +82,7 @@ export default function ChatScreen() {
           <Ionicons name="chatbubbles" size={20} color={Colors.accentCyan} />
         </View>
         <View>
-          <Text style={styles.headerTitle}>Voltuś AI</Text>
+          <Text style={styles.headerTitle}>Prąduś AI</Text>
           <View style={styles.statusRow}>
             <View style={[styles.statusDot, isLoading && styles.statusDotThinking]} />
             <Text style={styles.statusText}>{isLoading ? 'Thinking...' : 'Ready'}</Text>
@@ -129,7 +129,7 @@ export default function ChatScreen() {
 
             {messages.length === 0 && (
               <>
-                <Text style={styles.welcomeTitle}>Voltuś AI</Text>
+                <Text style={styles.welcomeTitle}>Prąduś AI</Text>
                 <Text style={styles.welcomeDesc}>Ask me anything about energy data, facilities, or regions.</Text>
                 <View style={styles.suggestions}>
                   {SUGGESTIONS.map((s, i) => (
@@ -180,7 +180,7 @@ export default function ChatScreen() {
             <Ionicons name="send" size={16} color={input.trim() ? '#fff' : Colors.textMuted} />
           </TouchableOpacity>
         </View>
-        <Text style={styles.hint}>Powered by Voltuś AI</Text>
+        <Text style={styles.hint}>Powered by Prąduś AI</Text>
       </View>
     </KeyboardAvoidingView>
   );
