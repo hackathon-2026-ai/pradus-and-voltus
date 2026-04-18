@@ -1,19 +1,28 @@
 import { type MouseEvent, type FC, useCallback } from 'react';
+import { useResizeHandle } from '../hooks/useResizeHandle';
 
 interface SidebarProps {
   zoomLevel: number;
   activeSection: string;
+  chatOpen: boolean;
+  width: number;
+  collapsed: boolean;
   onNavClick: (section: string) => void;
   onFlyToPoland: () => void;
+  onChatToggle: () => void;
+  onWidthChange: (w: number) => void;
+  onCollapseToggle: () => void;
 }
 
-const Sidebar: FC<SidebarProps> = ({ zoomLevel, activeSection, onNavClick, onFlyToPoland }) => {
+const Sidebar: FC<SidebarProps> = ({
+  zoomLevel, activeSection, chatOpen, width, collapsed,
+  onNavClick, onFlyToPoland, onChatToggle, onWidthChange, onCollapseToggle,
+}) => {
 
   const handleNavClick = useCallback((e: MouseEvent<HTMLAnchorElement>, section: string) => {
     e.preventDefault();
     onNavClick(section);
 
-    // Ripple effect
     const item = e.currentTarget;
     const ripple = document.createElement('span');
     ripple.classList.add('ripple');
@@ -36,15 +45,11 @@ const Sidebar: FC<SidebarProps> = ({ zoomLevel, activeSection, onNavClick, onFly
     e.currentTarget.style.transform = '';
   }, []);
 
+  const onResizeStart = useResizeHandle('right', onWidthChange, 180, 400);
+
   const navItems = [
     { section: 'map', label: 'Map View', icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-    )},
-    { section: 'demographics', label: 'Demographics', icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    )},
-    { section: 'economy', label: 'Economy', icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
     )},
     { section: 'analytics', label: 'Analytics', icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
@@ -55,7 +60,11 @@ const Sidebar: FC<SidebarProps> = ({ zoomLevel, activeSection, onNavClick, onFly
   ];
 
   return (
-    <nav id="sidebar" className="sidebar">
+    <nav
+      id="sidebar"
+      className={`sidebar${collapsed ? ' sidebar-collapsed' : ''}`}
+      style={{ width: collapsed ? 72 : width }}
+    >
       <div className="sidebar-header">
         <div className="logo">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
@@ -94,6 +103,25 @@ const Sidebar: FC<SidebarProps> = ({ zoomLevel, activeSection, onNavClick, onFly
         </div>
         <a
           href="#"
+          className={`nav-item nav-item-chat${chatOpen ? ' active' : ''}`}
+          id="nav-chat"
+          onClick={(e) => { e.preventDefault(); onChatToggle(); }}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
+          <div className="nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2C6.48 2 2 5.58 2 10c0 2.24 1.12 4.27 2.94 5.72L4 20l4.47-2.24C9.6 17.92 10.78 18 12 18c5.52 0 10-3.58 10-8S17.52 2 12 2z"/>
+              <circle cx="8" cy="10" r="1" fill="currentColor" stroke="none"/>
+              <circle cx="12" cy="10" r="1" fill="currentColor" stroke="none"/>
+              <circle cx="16" cy="10" r="1" fill="currentColor" stroke="none"/>
+            </svg>
+          </div>
+          <span className="nav-label">AI Chat</span>
+          <div className="nav-indicator"></div>
+        </a>
+        <a
+          href="#"
           className="nav-item"
           id="btn-fly-poland"
           onClick={(e) => { e.preventDefault(); onFlyToPoland(); }}
@@ -121,7 +149,21 @@ const Sidebar: FC<SidebarProps> = ({ zoomLevel, activeSection, onNavClick, onFly
           <span className="nav-label">Settings</span>
           <div className="nav-indicator"></div>
         </a>
+        <button className="sidebar-collapse-btn" onClick={onCollapseToggle} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: collapsed ? 'rotate(180deg)' : undefined, transition: 'transform 300ms ease' }}>
+            <polyline points="11 17 6 12 11 7"/>
+            <polyline points="18 17 13 12 18 7"/>
+          </svg>
+        </button>
       </div>
+
+      {/* Resize handle */}
+      {!collapsed && (
+        <div
+          className="resize-handle resize-handle-right"
+          onMouseDown={(e) => onResizeStart(e, width)}
+        />
+      )}
     </nav>
   );
 };

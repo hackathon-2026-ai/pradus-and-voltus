@@ -81,3 +81,148 @@ export const ENERGY_FACILITIES: EnergyFacility[] = [
   { id:'r7', name:'Łódź Bałuty', type:'house', lat:51.79, lng:19.45, capacityMW:0, baseEfficiency:48, weatherSensitivity:{wind:0.11,sun:0.09,rain:0}, province:'łódzkie', description:'Energy renovation projects underway.' },
   { id:'r8', name:'Lublin Czuby', type:'house', lat:51.22, lng:22.54, capacityMW:0, baseEfficiency:62, weatherSensitivity:{wind:0.12,sun:0.10,rain:0}, province:'lubelskie', description:'Recent insulation upgrades completed.' },
 ];
+
+// ===== PROCEDURAL FACILITY GENERATOR =====
+const PROVINCES_GEO: Record<string, { latMin: number; latMax: number; lngMin: number; lngMax: number }> = {
+  'dolnośląskie':        { latMin: 50.65, latMax: 51.35, lngMin: 15.45, lngMax: 17.10 },
+  'kujawsko-pomorskie':  { latMin: 52.65, latMax: 53.45, lngMin: 17.80, lngMax: 19.30 },
+  'lubelskie':           { latMin: 50.85, latMax: 51.80, lngMin: 22.00, lngMax: 23.40 },
+  'lubuskie':            { latMin: 51.70, latMax: 52.55, lngMin: 14.75, lngMax: 15.70 },
+  'łódzkie':             { latMin: 51.35, latMax: 52.05, lngMin: 18.80, lngMax: 20.20 },
+  'małopolskie':         { latMin: 49.60, latMax: 50.25, lngMin: 19.50, lngMax: 20.90 },
+  'mazowieckie':         { latMin: 51.65, latMax: 52.75, lngMin: 19.80, lngMax: 21.60 },
+  'opolskie':            { latMin: 50.30, latMax: 50.85, lngMin: 17.40, lngMax: 18.30 },
+  'podkarpackie':        { latMin: 49.50, latMax: 50.15, lngMin: 21.70, lngMax: 22.80 },
+  'podlaskie':           { latMin: 53.00, latMax: 54.00, lngMin: 22.30, lngMax: 23.50 },
+  'pomorskie':           { latMin: 53.95, latMax: 54.55, lngMin: 17.40, lngMax: 19.00 },
+  'śląskie':             { latMin: 49.85, latMax: 50.50, lngMin: 18.50, lngMax: 19.55 },
+  'świętokrzyskie':      { latMin: 50.50, latMax: 51.00, lngMin: 20.20, lngMax: 21.20 },
+  'warmińsko-mazurskie': { latMin: 53.50, latMax: 54.25, lngMin: 19.80, lngMax: 21.60 },
+  'wielkopolskie':       { latMin: 51.65, latMax: 52.60, lngMin: 16.30, lngMax: 18.20 },
+  'zachodniopomorskie':  { latMin: 53.40, latMax: 54.20, lngMin: 14.50, lngMax: 16.20 },
+};
+
+const WIND_NAMES = ['Northwind','Zephyr','Gale','Breeze','Mistral','Tramontane','Bora','Sirocco','Halcyon','Vortex','Cyclone','Aurora','Boreas','Aquilo'];
+const SOLAR_NAMES = ['Helios','Solaris','Sunridge','Photon','Daybreak','Lumina','Radiant','Zenith','Apex','Corona','Horizon'];
+const COAL_NAMES = ['Termika','Energia','Cieplna','Wytwórcza','Centrale'];
+const HYDRO_NAMES = ['Wodospad','Rzeka','Potok','Kaskada','Zapora','Nurt'];
+const STORAGE_NAMES = ['PowerVault','GridBank','FlexStore','VoltCache','AmpReserve'];
+const BIOMASS_NAMES = ['BioGreen','EcoFuel','GreenHeat','Woodchip','AgriPower'];
+const HOUSE_NAMES = ['Osiedle','Dzielnica','Kwartał','Bloki','Zabudowa'];
+const TOWN_SUFFIXES = ['owo','ów','ice','ek','no','ino','in','ów Wielki','ów Mały','ówek'];
+
+function seededRand(seed: number): number {
+  let s = (seed * 16807 + 12345) % 2147483647;
+  return (s & 0x7fffffff) / 2147483647;
+}
+
+function generateFacilities(): EnergyFacility[] {
+  const generated: EnergyFacility[] = [];
+  const provinces = Object.keys(PROVINCES_GEO);
+  const types: FacilityType[] = ['wind','wind','solar','solar','coal','hydro','storage','biomass','house','house','wind','solar'];
+  let id = 100;
+
+  for (let i = 0; i < 180; i++) {
+    const seed = i * 7919 + 42;
+    const r1 = seededRand(seed); const r2 = seededRand(seed + 1); const r3 = seededRand(seed + 2);
+    const r4 = seededRand(seed + 3); const r5 = seededRand(seed + 4); const r6 = seededRand(seed + 5);
+
+    const province = provinces[Math.floor(r1 * provinces.length)];
+    const geo = PROVINCES_GEO[province];
+    const type = types[Math.floor(r2 * types.length)];
+    const lat = Math.round((geo.latMin + r3 * (geo.latMax - geo.latMin)) * 1000) / 1000;
+    const lng = Math.round((geo.lngMin + r4 * (geo.lngMax - geo.lngMin)) * 1000) / 1000;
+
+    let name: string, cap: number, eff: number, ws: EnergyFacility['weatherSensitivity'], desc: string;
+    const suffix = TOWN_SUFFIXES[Math.floor(r5 * TOWN_SUFFIXES.length)];
+
+    switch (type) {
+      case 'wind': {
+        const n = WIND_NAMES[Math.floor(r6 * WIND_NAMES.length)];
+        name = `${n} ${suffix}`; cap = Math.round(15 + r5 * 180); eff = Math.round(65 + r6 * 20);
+        ws = { wind: 0.85 + r6 * 0.12, sun: 0, rain: 0.03 + r5 * 0.07 };
+        desc = `Wind farm with ${Math.round(cap / 3)} turbines.`;
+        break;
+      }
+      case 'solar': {
+        const n = SOLAR_NAMES[Math.floor(r6 * SOLAR_NAMES.length)];
+        name = `${n} ${suffix}`; cap = Math.round(5 + r5 * 80); eff = Math.round(70 + r6 * 18);
+        ws = { wind: 0, sun: 0.85 + r6 * 0.12, rain: 0.15 + r5 * 0.20 };
+        desc = `Solar installation covering ${Math.round(cap * 1.8)} hectares.`;
+        break;
+      }
+      case 'coal': {
+        const n = COAL_NAMES[Math.floor(r6 * COAL_NAMES.length)];
+        name = `EC ${n} ${suffix}`; cap = Math.round(200 + r5 * 2000); eff = Math.round(78 + r6 * 14);
+        ws = { wind: 0, sun: 0, rain: 0.01 + r5 * 0.02 };
+        desc = `Thermal power plant.`;
+        break;
+      }
+      case 'hydro': {
+        const n = HYDRO_NAMES[Math.floor(r6 * HYDRO_NAMES.length)];
+        name = `${n} ${suffix}`; cap = Math.round(10 + r5 * 150); eff = Math.round(82 + r6 * 14);
+        ws = { wind: 0, sun: 0, rain: 0.30 + r5 * 0.20 };
+        desc = `Hydroelectric plant on local river.`;
+        break;
+      }
+      case 'storage': {
+        const n = STORAGE_NAMES[Math.floor(r6 * STORAGE_NAMES.length)];
+        name = `${n} ${suffix}`; cap = Math.round(20 + r5 * 120); eff = Math.round(90 + r6 * 8);
+        ws = { wind: 0, sun: 0, rain: 0 };
+        desc = `Grid-scale battery storage facility.`;
+        break;
+      }
+      case 'biomass': {
+        const n = BIOMASS_NAMES[Math.floor(r6 * BIOMASS_NAMES.length)];
+        name = `${n} ${suffix}`; cap = Math.round(5 + r5 * 60); eff = Math.round(68 + r6 * 14);
+        ws = { wind: 0, sun: 0, rain: 0.02 + r5 * 0.06 };
+        desc = `Biomass energy from agricultural waste.`;
+        break;
+      }
+      default: { // house
+        const n = HOUSE_NAMES[Math.floor(r6 * HOUSE_NAMES.length)];
+        name = `${n} ${suffix}`; cap = 0; eff = Math.round(40 + r6 * 40);
+        ws = { wind: 0.08 + r5 * 0.12, sun: 0.05 + r6 * 0.10, rain: 0 };
+        desc = `Residential area with ${Math.round(200 + r5 * 2000)} households.`;
+        break;
+      }
+    }
+
+    generated.push({
+      id: `g${id++}`, name, type, lat, lng, capacityMW: cap, baseEfficiency: eff,
+      weatherSensitivity: ws, province, description: desc,
+    });
+  }
+
+  // === SECOND PASS: ensure at least 5 per province ===
+  const allSoFar = [...ENERGY_FACILITIES, ...generated];
+  const countPerProvince: Record<string, number> = {};
+  for (const f of allSoFar) countPerProvince[f.province] = (countPerProvince[f.province] || 0) + 1;
+
+  for (const province of Object.keys(PROVINCES_GEO)) {
+    const have = countPerProvince[province] || 0;
+    const need = Math.max(0, 5 - have);
+    const geo = PROVINCES_GEO[province];
+    const fillTypes: FacilityType[] = ['wind', 'solar', 'house', 'biomass', 'storage'];
+    for (let j = 0; j < need; j++) {
+      const s = id * 3571 + j * 9311;
+      const r1 = seededRand(s); const r2 = seededRand(s + 1);
+      const lat = Math.round((geo.latMin + r1 * (geo.latMax - geo.latMin)) * 1000) / 1000;
+      const lng = Math.round((geo.lngMin + r2 * (geo.lngMax - geo.lngMin)) * 1000) / 1000;
+      const ft = fillTypes[j % fillTypes.length];
+      const suffix = TOWN_SUFFIXES[j % TOWN_SUFFIXES.length];
+      const cap = ft === 'house' ? 0 : Math.round(10 + r1 * 80);
+      generated.push({
+        id: `g${id++}`, name: `${ft === 'house' ? 'Osiedle' : ft === 'wind' ? 'Wiatraki' : ft === 'solar' ? 'Farma PV' : ft === 'biomass' ? 'BioEko' : 'MagazynE'} ${suffix}`,
+        type: ft, lat, lng, capacityMW: cap, baseEfficiency: Math.round(55 + r2 * 30),
+        weatherSensitivity: ft === 'wind' ? { wind: 0.9, sun: 0, rain: 0.05 } : ft === 'solar' ? { wind: 0, sun: 0.9, rain: 0.2 } : { wind: 0.1, sun: 0.1, rain: 0 },
+        province, description: `Local ${ft} installation.`,
+      });
+    }
+  }
+
+  return generated;
+}
+
+// Merge hand-crafted + generated
+ENERGY_FACILITIES.push(...generateFacilities());
