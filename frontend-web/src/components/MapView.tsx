@@ -21,6 +21,27 @@ import {
 
 export type ViewMode = 'provinces' | 'counties';
 
+// ===== DISTANCE-BASED THINNING =====
+// At country zoom, show max 1 pin per ~minDist degrees, prioritizing larger/real facilities
+function thinByDistance(facilities: EnergyFacility[], minDist: number): EnergyFacility[] {
+  // Sort: real facilities first (no 'g' prefix), then by capacity descending
+  const sorted = [...facilities].sort((a, b) => {
+    const aReal = a.id.startsWith('g') ? 0 : 1;
+    const bReal = b.id.startsWith('g') ? 0 : 1;
+    if (aReal !== bReal) return bReal - aReal;
+    return b.capacityMW - a.capacityMW;
+  });
+
+  const kept: EnergyFacility[] = [];
+  for (const f of sorted) {
+    const tooClose = kept.some(k =>
+      Math.abs(k.lat - f.lat) < minDist && Math.abs(k.lng - f.lng) < minDist
+    );
+    if (!tooClose) kept.push(f);
+  }
+  return kept;
+}
+
 // ===== SVG ICONS FOR EACH FACILITY TYPE =====
 function getFacilityIconSVG(type: string) {
   switch (type) {
@@ -361,16 +382,20 @@ const MapView: FC<MapViewProps> = ({
     facilityMarkersRef.current = [];
 
     // Determine which facilities to show
-    const facilitiesToShow = viewMode === 'counties' && activeProvince
-      ? ENERGY_FACILITIES.filter(f => f.province === activeProvince)
-      : ENERGY_FACILITIES;
+    let facilitiesToShow: EnergyFacility[];
+    if (viewMode === 'counties' && activeProvince) {
+      // Province drill-down: show ALL pins for that province
+      facilitiesToShow = ENERGY_FACILITIES.filter(f => f.province === activeProvince);
+    } else {
+      // Country zoom: thin by distance — max 1 pin per ~0.5 degrees
+      facilitiesToShow = thinByDistance(ENERGY_FACILITIES, 0.45);
+    }
 
     facilitiesToShow.forEach((facility, idx) => {
       const config = FACILITY_TYPE_CONFIG[facility.type];
-      const isActive = activeFacilityId === facility.id;
 
       const html = `
-        <div class="facility-pin type-${facility.type}${isActive ? ' active' : ''}" style="animation-delay: ${idx * 0.05}s" data-facility-id="${facility.id}">
+        <div class="facility-pin type-${facility.type}" style="animation-delay: ${idx * 0.05}s" data-facility-id="${facility.id}">
           <div class="facility-pin-icon pin-anim-${facility.type}">
             ${getFacilityIconSVG(facility.type)}
           </div>
@@ -398,7 +423,24 @@ const MapView: FC<MapViewProps> = ({
 
       facilityMarkersRef.current.push(marker);
     });
-  }, [viewMode, activeProvince, activeFacilityId]);
+  }, [viewMode, activeProvince]);
+
+  // ===== HIGHLIGHT ACTIVE FACILITY (without re-creating markers) =====
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Remove active class from all pins
+    container.querySelectorAll('.facility-pin.active').forEach(el => {
+      el.classList.remove('active');
+    });
+
+    // Add active class to the selected pin
+    if (activeFacilityId) {
+      const pin = container.querySelector(`[data-facility-id="${activeFacilityId}"]`);
+      if (pin) pin.classList.add('active');
+    }
+  }, [activeFacilityId]);
 
   // ===== FLY TO POLAND =====
   useEffect(() => {
