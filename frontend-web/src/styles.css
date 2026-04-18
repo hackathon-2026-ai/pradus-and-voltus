@@ -37,6 +37,88 @@
     --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* ===== LIGHT THEME ===== */
+:root[data-theme="light"] {
+    --bg-primary: #f1f5f9;
+    --bg-secondary: #ffffff;
+    --bg-card: rgba(255, 255, 255, 0.9);
+    --bg-glass: rgba(0, 0, 0, 0.03);
+    --bg-glass-hover: rgba(0, 0, 0, 0.06);
+    --border-subtle: rgba(0, 0, 0, 0.08);
+    --border-active: rgba(99, 102, 241, 0.5);
+
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+
+    --gradient-glow: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.08), transparent 70%);
+    --gradient-card: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.02));
+}
+
+:root[data-theme="light"] body {
+    background: var(--bg-primary);
+}
+
+/* Light theme Leaflet overrides */
+[data-theme="light"] .leaflet-control-zoom a {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-subtle) !important;
+}
+
+[data-theme="light"] .leaflet-control-attribution {
+    background: rgba(241, 245, 249, 0.85) !important;
+    color: var(--text-muted) !important;
+}
+
+[data-theme="light"] .leaflet-popup-content-wrapper {
+    background: rgba(255, 255, 255, 0.97) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-subtle);
+}
+
+[data-theme="light"] .leaflet-popup-tip {
+    background: rgba(255, 255, 255, 0.97) !important;
+}
+
+[data-theme="light"] .region-tooltip {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(99, 102, 241, 0.06) !important;
+}
+
+[data-theme="light"] .region-tooltip::before {
+    border-top-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+[data-theme="light"] .tt-name {
+    color: #0f172a;
+}
+
+[data-theme="light"] .tt-stat-val {
+    color: #0f172a;
+}
+
+[data-theme="light"] .map-legend {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .top-bar {
+    background: rgba(241, 245, 249, 0.9);
+}
+
+[data-theme="light"] .facility-label {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: #0f172a;
+}
+
+[data-theme="light"] .facility-label::after {
+    border-top-color: rgba(255, 255, 255, 0.95);
+}
+
 *,
 *::before,
 *::after {
@@ -1745,6 +1827,132 @@ body {
     height: 10px;
     border-radius: 50%;
     flex-shrink: 0;
+}
+
+/* ===== SETTINGS POPUP ===== */
+.settings-wrapper {
+    position: relative;
+}
+
+.settings-popup {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 8px;
+    width: 220px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(99, 102, 241, 0.06);
+    padding: 14px 16px;
+    z-index: 1100;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(8px) scale(0.95);
+    transform-origin: bottom left;
+    transition:
+        opacity 250ms cubic-bezier(0.4, 0, 0.2, 1),
+        transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.settings-popup-open {
+    pointer-events: auto;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.settings-popup-header {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+.settings-popup-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.settings-popup-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* ===== THEME TOGGLE SWITCH ===== */
+.theme-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    outline: none;
+}
+
+.theme-toggle-track {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 56px;
+    height: 28px;
+    border-radius: 14px;
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid var(--border-subtle);
+    padding: 0 4px;
+    transition: background var(--transition-base), border-color var(--transition-base);
+}
+
+.theme-toggle:hover .theme-toggle-track {
+    border-color: var(--accent-primary);
+}
+
+.theme-toggle-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    z-index: 1;
+    transition: color var(--transition-base);
+}
+
+.theme-toggle-moon {
+    color: var(--accent-primary);
+}
+
+.theme-toggle-sun {
+    color: var(--text-muted);
+}
+
+.theme-toggle-light .theme-toggle-moon {
+    color: var(--text-muted);
+}
+
+.theme-toggle-light .theme-toggle-sun {
+    color: var(--accent-amber);
+}
+
+.theme-toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    transition: transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1), background var(--transition-base);
+}
+
+.theme-toggle-light .theme-toggle-thumb {
+    transform: translateX(28px);
+    background: var(--accent-amber);
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.theme-toggle-light .theme-toggle-track {
+    background: rgba(245, 158, 11, 0.12);
 }
 
 /* ===== AI CHAT NAV ITEM ===== */

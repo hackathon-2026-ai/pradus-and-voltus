@@ -1,5 +1,6 @@
 import { type MouseEvent, type FC, useCallback } from 'react';
 import { useResizeHandle } from '../hooks/useResizeHandle';
+import SettingsPopup from './SettingsPopup';
 
 interface SidebarProps {
   zoomLevel: number;
@@ -7,16 +8,22 @@ interface SidebarProps {
   chatOpen: boolean;
   width: number;
   collapsed: boolean;
+  theme: 'dark' | 'light';
+  settingsOpen: boolean;
   onNavClick: (section: string) => void;
   onFlyToPoland: () => void;
   onChatToggle: () => void;
   onWidthChange: (w: number) => void;
   onCollapseToggle: () => void;
+  onThemeToggle: () => void;
+  onSettingsToggle: () => void;
+  onSettingsClose: () => void;
 }
 
 const Sidebar: FC<SidebarProps> = ({
-  zoomLevel, activeSection, chatOpen, width, collapsed,
+  zoomLevel, activeSection, chatOpen, width, collapsed, theme, settingsOpen,
   onNavClick, onFlyToPoland, onChatToggle, onWidthChange, onCollapseToggle,
+  onThemeToggle, onSettingsToggle, onSettingsClose,
 }) => {
 
   const handleNavClick = useCallback((e: MouseEvent<HTMLAnchorElement>, section: string) => {
@@ -134,21 +141,29 @@ const Sidebar: FC<SidebarProps> = ({
           <span className="nav-label">Fly to Poland</span>
           <div className="nav-indicator"></div>
         </a>
-        <a
-          href="#"
-          className="nav-item"
-          data-section="settings"
-          id="nav-settings"
-          onClick={(e) => handleNavClick(e, 'settings')}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-        >
+        <div className="settings-wrapper">
+          <SettingsPopup
+            open={settingsOpen}
+            theme={theme}
+            onThemeToggle={onThemeToggle}
+            onClose={onSettingsClose}
+          />
+          <a
+            href="#"
+            className={`nav-item${settingsOpen ? ' active' : ''}`}
+            data-section="settings"
+            id="nav-settings"
+            onClick={(e) => { e.preventDefault(); onSettingsToggle(); }}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
           <div className="nav-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </div>
           <span className="nav-label">Settings</span>
           <div className="nav-indicator"></div>
         </a>
+        </div>
         <button className="sidebar-collapse-btn" onClick={onCollapseToggle} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: collapsed ? 'rotate(180deg)' : undefined, transition: 'transform 300ms ease' }}>
             <polyline points="11 17 6 12 11 7"/>
