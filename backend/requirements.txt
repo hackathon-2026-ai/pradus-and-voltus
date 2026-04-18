@@ -8,3 +8,7 @@ requests
 json
 matplotlib
 fastapi
+openmeteo_requests
+pytz
+requests_cache
+retry_requests

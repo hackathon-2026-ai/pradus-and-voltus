@@ -16,75 +16,90 @@ def get_rce(file_path: str = DATA_PATH):
         return f"Brak danych: {e}"
 
 
-def run_pradus_api(user_prompt: str, model: str = "gemma4:e2b"):  # Zmieniono nazwę modelu na poprawną
+def run_pradus_api(user_prompt: str, model: str = "gemma4:e2b"):
     demo_rce_csv = get_rce()
 
-    # Zabezpieczenie przed brakiem danych w Excelu
     if "Błąd" in demo_rce_csv or "Brak danych" in demo_rce_csv:
         return {"status": "error", "message": demo_rce_csv}
 
     try:
         url = "http://localhost:11434/api/chat"
 
-        system_prompt = f"""Jesteś Prąduś, inteligentny doradca energetyczny klientów TAURONA. 
-        Odpowiadasz wesoło, używasz gwary śląskiej i pomagasz klientom.
+        profil_klienta = """
+            - Posiada: Taryfa Dynamiczna TAURON, auto elektryczne (EV).
+            - Złe nawyki: Ładuje auto wieczorem (kiedy jest najdrożej).
+            """
 
-        Twoim głównym celem jako AI jest analiza danych i przekształcanie ich w praktyczne wnioski. 
-        Gdy klient pyta o zużycie lub ceny, zawsze kieruj się tymi zasadami:
-        1. Analizuj zużycie energii: Na podstawie dostarczonych danych cenowych szukaj najtańszych godzin.
-        2. Wzorce zużycia: Tłumacz klientowi, kiedy system energetyczny ma nadwyżki (np. z OZE, co widać po niskich cenach).
-        3. Zachowania klientów: Doradzaj zmianę nawyków (np. "włącz pralkę w południe").
-        4. Prognozowanie i optymalizacja: Przedstawiaj klientowi konkretne, zoptymalizowane "Zielone Okna" czasowe na używanie prądu.
+        # Zmiana: Wymagamy od LLM-a Explainability (Wyjaśnialności)
+        system_prompt = f"""Jesteś Prąduś, proaktywny, inteligentny doradca energetyczny TAURONA. 
+    Mówisz wesoło, używasz gwary śląskiej. 
 
-        Oto aktualne dane o Rynkowej Cenie Energii (RCE), które masz przeanalizować, aby odpowiedzieć klientowi:
-        {demo_rce_csv}
+    Profil klienta: {profil_klienta}
+    Dane RCE (szukaj najniższych cen): {demo_rce_csv}
 
-        Nie wymieniaj wszystkich danych z tabeli. Użyj ich tylko po to, by znaleźć najtańsze i najdroższe godziny, i przekaż to klientowi jako prostą poradę.
-        """
+    Twoje cele:
+    1. Doradź, kiedy jest najtańsze okno.
+    2. Oszacuj oszczędność (przesunięcie 1h ładowania z drogiej na tanią to ok. 5 PLN oszczędności).
+    3. EXPLAINABILITY (Wyjaśnialność): Krótko wyjaśnij, DLACZEGO cena o tej godzinie jest niska (np. z powodu wiatru/słońca z danych RCE).
 
+    Odpowiedz TYLKO w formacie JSON:
+    {{
+        "wiadomosc_slaska": "Twoja wesoła porada dla klienta",
+        "najlepsza_godzina": "np. 13:00",
+        "estymowana_oszczednosc_za_1h_pln": 5,
+        "wyjasnienie_ai": "Krótkie logiczne uzasadnienie na jakiej podstawie podjąłeś decyzję (np. O 13:00 cena RCE jest ujemna z powodu fotowoltaiki)"
+    }}
+    """
         payload = {
             "model": model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            "stream": False  # Czekamy na całość odpowiedzi
+            "stream": False,
+            "format": "json"
         }
 
         response = requests.post(url, json=payload)
 
-        # Zabezpieczenie HTTP (wyłapie m.in. błąd 404, jeśli modelu nie ma)
         if response.status_code != 200:
-            return {"status": "error", "message": f"Błąd serwera Ollama ({response.status_code}): {response.text}"}
+            return {"status": "error", "message": f"Błąd serwera Ollama ({response.status_code})"}
 
-        response_json = response.json()
+        ai_response_text = response.json()["message"]["content"]
 
-        # Zabezpieczenie struktury JSON
-        if "message" not in response_json:
-            return {"status": "error", "message": f"Nieoczekiwana odpowiedź API: {response_json}"}
+        try:
+            ai_data = json.loads(ai_response_text)
+        except json.JSONDecodeError:
+            return {"status": "error", "message": "Ollama nie zwróciła poprawnego JSON-a."}
 
-        # Wyciągamy sam tekst odpowiedzi od AI
-        ai_response = response_json["message"]["content"]
+        # --- LEGAL FROM DAY ONE: TWARDA NAKŁADKA PRAWNA ---
+        legal_disclaimer = "UWAGA: Powyższe wyliczenia to estymacja oparta na rynkowych cenach energii (RCE) analizowana przez algorytm AI. Nie stanowią one wiążącej oferty handlowej w rozumieniu Kodeksu Cywilnego. Rzeczywiste oszczędności zależą od Twojej ostatecznej taryfy i dokładnego zużycia."
+        data_transparency = "Prywatność: Twoje dane zostały zanonimizowane (Brak PII). AI przeanalizowało tylko Twój profil zużycia (EV) i ogólnodostępne ceny giełdowe."
 
-        # Zwracamy piękny, ustrukturyzowany słownik (gotowy do bycia JSON-em)
+        # Finalny JSON z wbudowanym modułem prawnym
         return {
             "status": "success",
-            "pradus_message": ai_response
+            "ui_components": {
+                "pradus_alert": ai_data.get("wiadomosc_slaska", "Błąd"),
+                "kalkulator_dane": {
+                    "okno_czasowe": ai_data.get("najlepsza_godzina", "Brak danych"),
+                    "stawka_oszczednosciowa_pln": ai_data.get("estymowana_oszczednosc_za_1h_pln", 0)
+                }
+            },
+            "compliance_and_legal": {
+                "explainability_xai": ai_data.get("wyjasnienie_ai", "Decyzja algorytmiczna"),
+                "disclaimer": legal_disclaimer,
+                "data_privacy_notice": data_transparency
+            }
         }
 
-    except requests.exceptions.ConnectionError:
-        return {"status": "error", "message": "Nie można połączyć się z modelem. Czy Ollama jest uruchomiona?"}
     except Exception as e:
-        return {"status": "error", "message": f"Wystąpił błąd w kodzie: {str(e)}"}
+        return {"status": "error", "message": str(e)}
 
-'''
+
+# Testowe odpalenie (możesz usunąć po sprawdzeniu)
 if __name__ == "__main__":
-    user_prompt = "Witoj Prąduś, powiedz mi kiedy najlepij jutro uprać ciuchy żeby było tanij?"
-
-    print("Łączę z Prądusiem... (Przetwarzanie w tle)\n")
-
-    # Wywołujemy funkcję
+    user_prompt = "Witoj Prąduś, sprawdzisz mi kiedy ładwoać fure?"
+    print("Łączę z Prądusiem...")
     result = run_pradus_api(user_prompt)
-
-    # Drukujemy wynik jako poprawny format JSON (z polskimi znakami)
-    print(json.dumps(result, indent=4, ensure_ascii=False))'''
+    print(json.dumps(result, indent=4, ensure_ascii=False))
