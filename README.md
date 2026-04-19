@@ -1,8 +1,18 @@
 # Pradus & Voltus
 
+UI view
+
 AI-powered hackathon project for interactive energy insights:
 - **Prąduś**: consumer-facing assistant
 - **Voltuś**: analyst/copilot assistant
+
+<img width="1914" height="960" alt="UI_web_1" src="https://github.com/user-attachments/assets/e215969c-ba76-4321-9217-9d82877ea761" />
+
+<img width="1920" height="953" alt="UI_web_2" src="https://github.com/user-attachments/assets/fc539006-fde1-4501-94c8-534bfe7392ba" />
+
+<img width="1920" height="957" alt="UI_web_3" src="https://github.com/user-attachments/assets/18e7e1af-6c30-4b2c-9795-7f90629b98eb" />
+
+
 
 The repository contains a Flask backend, a React web app, and an Expo mobile app.
 
@@ -124,6 +134,15 @@ npm run build
 ```
 
 ### Mobile app
+
+UI view
+
+<img width="946" height="2048" alt="UI_app_1" src="https://github.com/user-attachments/assets/33afa490-8e52-4838-a53d-5c776ad50325" />
+
+<img width="946" height="2048" alt="UI_app_2" src="https://github.com/user-attachments/assets/ed84ae7c-3803-4005-a2ff-57e80a62e398" />
+
+<img width="946" height="2048" alt="UI_app_3" src="https://github.com/user-attachments/assets/32a19a96-4184-44e3-bb46-cc6b367f871a" />
+
 
 ```bash
 cd /home/runner/work/pradus-and-voltus/pradus-and-voltus/frontend-mobile/mobile
