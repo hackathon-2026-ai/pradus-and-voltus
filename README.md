@@ -44,71 +44,34 @@ The repository contains a Flask backend, a React web app, and an Expo mobile app
 
 ## Prerequisites
 
-Choose either Docker-based backend or local backend setup.
-
 ### General
 - Node.js 20+ and npm
 - Python 3.12+
 
 ### If running backend locally (without Docker)
-- PostgreSQL (or adjust `DATABASE_URL`)
 - Ollama running locally on `http://localhost:11434` with a compatible model
 
 ## Quick start
 
 ### 1) Run backend + database with Docker Compose
 
-```bash
-cd /home/runner/work/pradus-and-voltus/pradus-and-voltus
-cp backend/.env.example backend/.env
-docker compose up --build
-```
 
-Backend will be available at `http://localhost:5000`.
 
-### 2) Run web frontend
+## How to run the backend
 
 ```bash
-cd /home/runner/work/pradus-and-voltus/pradus-and-voltus/frontend-web
-npm ci
-npm start
-```
-
-Web app runs on Vite dev server and proxies `/api` to `http://localhost:5000`.
-
-### 3) Run mobile app (optional)
-
-```bash
-cd /home/runner/work/pradus-and-voltus/pradus-and-voltus/frontend-mobile/mobile
-npm ci
-npm start
-```
-
-Then open with Expo Go / emulator.
-
-## Local backend (without Docker)
-
-```bash
-cd /home/runner/work/pradus-and-voltus/pradus-and-voltus/backend
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+cd backend
 pip install -r requirements.txt
-cp .env.example .env
-python -m flask --app wsgi:app run --host 127.0.0.1 --port 5000
+fastapi run api.py --port 5000
 ```
 
-## Environment variables (backend)
+Make sure `backend/.env` contains:
+```
+GROQ_API_KEY=your_key_here
+```
 
-Current `backend/.env.example` values:
+> Vite proxies `/api` requests to `localhost:5000` automatically.
 
-- `FLASK_DEBUG=1`
-- `DATABASE_URL=postgresql://user:password@db:5432/app_db`
-- `SECRET_KEY=change-me`
-
-> If you use Groq-related scripts, also set `GROQ_API_KEY`.
->
-> For the default Docker Compose Postgres setup, use:
-> `DATABASE_URL=postgresql://postgres:postgres@db:5432/app_db`
 
 ## API overview
 
@@ -125,13 +88,6 @@ curl "http://localhost:5000/api/chat/pradus?message=When%20should%20I%20charge%2
 
 ## Useful commands
 
-### Web app
-
-```bash
-cd /home/runner/work/pradus-and-voltus/pradus-and-voltus/frontend-web
-npm run lint
-npm run build
-```
 
 ### Mobile app
 
@@ -144,19 +100,19 @@ UI view
 <img width="946" height="2048" alt="UI_app_3" src="https://github.com/user-attachments/assets/32a19a96-4184-44e3-bb46-cc6b367f871a" />
 
 
+## How to run the mobile backend
+
 ```bash
-cd /home/runner/work/pradus-and-voltus/pradus-and-voltus/frontend-mobile/mobile
-npm run android
-npm run ios
-npm run web
+cd backend
+pip install -r requirements.txt
+uvicorn api:app --host 0.0.0.0 --reload --port 8000
 ```
 
-## Demo data
-
-The AI flows read sample files from `Demo-Dataset/`, including:
-- RCE Excel data
-- ENTSO-E production CSV
-- mock behavior/OZE datasets under `Demo-Dataset/Mock_Data`
+> Requires [Ollama](https://ollama.com/) running locally with the `gemma4:e2b` model:
+> ```bash
+> ollama pull gemma4:e2b
+> ollama serve
+> ```
 
 ## License
 
