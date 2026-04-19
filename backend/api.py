@@ -24,5 +24,5 @@ def chat_with_pradus(message: str):
 
 @app.get("/api/chat/voltus")
 def chat_with_voltus(message: str):
-    # return run_voltus_api(user_prompt=message)
-    return run_voltus_groq_api(user_prompt=message)
+    return run_voltus_api(user_prompt=message)
+    #return run_voltus_groq_api(user_prompt=message)
