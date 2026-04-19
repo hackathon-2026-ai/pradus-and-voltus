@@ -154,7 +154,8 @@ def run_voltus_groq_api(user_prompt: str, model: str = "llama-3.3-70b-versatile"
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-
+'''
 if __name__ == "__main__":
     result = run_voltus_groq_api("Zrób raport o produkcji prądu")
     print(json.dumps(result, indent=4, ensure_ascii=False))
+    '''
