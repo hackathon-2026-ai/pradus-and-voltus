@@ -4,6 +4,7 @@ import pandas as pd
 import json
 from dotenv import load_dotenv
 from config import DATA_PATH, DATA_PATH_2, DATA_PATH_3, DATA_PATH_4
+import time
 
 # Ładujemy zmienne z pliku .env (żeby zaciągnąć klucz API)
 load_dotenv()
@@ -153,7 +154,7 @@ def run_voltus_groq_api(user_prompt: str, model: str = "llama-3.3-70b-versatile"
                 "data_lineage": data_lineage
             }
         }
-
+        time.sleep(7)
         return final_output
 
     except requests.exceptions.ConnectionError:
