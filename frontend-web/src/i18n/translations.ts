@@ -45,9 +45,9 @@ export const translations: Translations = {
   'chat.shrink': { pl: 'Zmniejsz czat', en: 'Shrink chat' },
   'chat.expand': { pl: 'Powiększ czat', en: 'Expand chat' },
   'chat.welcome': { pl: 'Zapytaj mnie o dane energetyczne, obiekty lub regiony na mapie.', en: 'Ask me anything about energy data, facilities, or regions on the map.' },
-  'chat.suggestion1': { pl: 'Jaka jest całkowita moc energetyczna?', en: "What's the total energy capacity?" },
-  'chat.suggestion2': { pl: 'Porównaj produkcję wiatru i słońca', en: 'Compare wind vs solar output' },
-  'chat.suggestion3': { pl: 'Które województwo zużywa najwięcej energii?', en: 'Which province uses the most energy?' },
+  'chat.suggestion1': { pl: 'Jak produkcja OZE wpływa na ceny RCE i co z tego wynika dla klienta?', en: 'How does RES production affect RCE prices and what does it mean for the client?' },
+  'chat.suggestion2': { pl: 'Który segment klientów najlepiej skorzysta na taryfie dynamicznej i dlaczego?', en: 'Which customer segment benefits most from dynamic tariffs and why?' },
+  'chat.suggestion3': { pl: 'Zrób raport po śląsku o rynku energii z ostatnich 24h.', en: 'Generate a Silesian-dialect report on the energy market from the last 24h.' },
   'chat.placeholder': { pl: 'Zapytaj o dane energetyczne...', en: 'Ask about energy data...' },
   'chat.poweredBy': { pl: 'Napędzany przez Voltuś AI', en: 'Powered by Voltuś AI' },
   'chat.response1': {

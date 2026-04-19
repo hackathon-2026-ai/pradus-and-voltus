@@ -7,7 +7,7 @@ DATA_PATH_2 = os.path.join(BASE_DIR, "..", "Demo-Dataset", "electricity_producti
 DATA_PATH_3 = os.path.join(BASE_DIR,"..","Demo-Dataset","Mock_Data","mock_customer_behavior.csv")
 DATA_PATH_4 = os.path.join(BASE_DIR,"..","Demo-Dataset","Mock_Data","mock_oze_rce_24h.csv")
 DEFAULT_PROMPTS=[
-    "Proszę o podsumowanie produkcji",
-    "Jakiej produkcji możemy się spodziewać jutro?",
-    "Proszę opowiedzieć mi o zachowaniach klientów"
+    "Jak produkcja OZE wpływa na ceny RCE i co z tego wynika dla klienta?",
+    "Który segment klientów najlepiej skorzysta na taryfie dynamicznej i dlaczego?",
+    "Zrób raport po śląsku o rynku energii z ostatnich 24h."
 ]

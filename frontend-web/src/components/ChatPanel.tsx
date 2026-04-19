@@ -1,4 +1,5 @@
 import { type FC, useState, useRef, useEffect } from 'react';
+import { useTranslation } from '../i18n/LanguageContext';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -529,6 +530,7 @@ type ThinkingPhase = 'idle' | 'thinking' | 'countdown';
 const FINISH_COUNTDOWN_STEP_MS = 300;
 
 const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
+  const { t } = useTranslation();
   const [inputValue, setInputValue] = useState('');
   const [expanded, setExpanded] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -645,11 +647,11 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
               <div className="chat-title">Voltuś AI</div>
               <div className="chat-status">
                 <span className="chat-status-dot"></span>
-                {thinkingPhase === 'idle' ? 'Ready' : 'Thinking...'}
+                {thinkingPhase === 'idle' ? t('chat.ready') : t('chat.thinking')}
               </div>
             </div>
           </div>
-          <button className="chat-close" onClick={() => setExpanded(e => !e)} aria-label={expanded ? 'Shrink chat' : 'Expand chat'}>
+          <button className="chat-close" onClick={() => setExpanded(e => !e)} aria-label={expanded ? t('chat.shrink') : t('chat.expand')}>
             {expanded ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="4 14 10 14 10 20"/>
@@ -690,11 +692,11 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
           {messages.length === 0 && (
             <div className="chat-welcome">
               <h3>Voltuś AI</h3>
-              <p>Ask me anything about energy data, facilities, or regions on the map.</p>
+              <p>{t('chat.welcome')}</p>
               <div className="chat-suggestions">
-                <button className="chat-suggestion" onClick={() => { setInputValue("What's the total energy capacity?"); }}>What's the total energy capacity?</button>
-                <button className="chat-suggestion" onClick={() => { setInputValue("Compare wind vs solar output"); }}>Compare wind vs solar output</button>
-                <button className="chat-suggestion" onClick={() => { setInputValue("Which province uses the most energy?"); }}>Which province uses the most energy?</button>
+                <button className="chat-suggestion" onClick={() => { setInputValue(t('chat.suggestion1')); }}>{t('chat.suggestion1')}</button>
+                <button className="chat-suggestion" onClick={() => { setInputValue(t('chat.suggestion2')); }}>{t('chat.suggestion2')}</button>
+                <button className="chat-suggestion" onClick={() => { setInputValue(t('chat.suggestion3')); }}>{t('chat.suggestion3')}</button>
               </div>
             </div>
           )}
@@ -747,7 +749,7 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
               ref={inputRef}
               type="text"
               className="chat-input"
-              placeholder="Ask about energy data..."
+              placeholder={t('chat.placeholder')}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => {
@@ -768,7 +770,7 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
             </button>
           </div>
           <div className="chat-input-hint">
-            Powered by Voltuś AI
+            {t('chat.poweredBy')}
           </div>
         </div>
       </div>
