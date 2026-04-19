@@ -188,7 +188,33 @@ body {
     align-items: center;
     min-height: 32px;
     padding-left: 10px;
-    transition: padding-left var(--transition-base);
+    gap: 10px;
+    transform: translateX(0);
+    transition: transform var(--transition-spring), gap var(--transition-base);
+    will-change: transform;
+}
+
+.logo-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.28), 0 0 8px rgba(34, 211, 238, 0.12);
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+[data-theme="light"] .logo-icon {
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.18), 0 0 8px rgba(34, 211, 238, 0.08);
+}
+
+.logo-icon-img {
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
 .logo-text {
@@ -196,11 +222,15 @@ body {
     font-weight: 700;
     background: var(--gradient-primary);
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    transform: translateX(0) rotate(0deg) scale(1);
+    transition: transform var(--transition-spring);
+    will-change: transform;
     background-clip: text;
     letter-spacing: -0.5px;
     transform: translateX(4px);
-    transition: transform var(--transition-base), opacity var(--transition-base);
+    transition: transform var(--transition-spring), opacity var(--transition-base), max-width var(--transition-base);
+    overflow: hidden;
+    max-width: 220px;
 }
 
 .sidebar-nav {
@@ -248,10 +278,23 @@ body {
 }
 
 /* ===== SIDEBAR COLLAPSED ===== */
-.sidebar-collapsed .logo-text,
 .sidebar-collapsed .nav-label,
 .sidebar-collapsed .zoom-info {
     display: none;
+}
+
+.sidebar-collapsed .logo-text {
+    opacity: 0;
+    max-width: 0;
+    transform: translateX(-10px);
+}
+
+.sidebar-collapsed .logo {
+    gap: 0;
+    transform: translateX(-10px);
+}
+.sidebar-collapsed .logo-icon {
+    transform: translateX(0px) rotate(-12deg) scale(1.12);
 }
 
 .sidebar.sidebar-collapsed {
@@ -263,9 +306,6 @@ body {
     padding: 14px;
 }
 
-.sidebar-collapsed .logo {
-    padding-left: 0;
-}
 
 .sidebar-collapsed .sidebar-collapse-btn svg {
     transform: rotate(180deg);
@@ -462,7 +502,7 @@ body {
         transform: scale(1);
         opacity: 1;
     }
-
+        transform: translateX(-18px);
     50% {
         transform: scale(1.25);
         opacity: 0.9;

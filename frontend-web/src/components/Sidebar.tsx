@@ -77,6 +77,9 @@ const Sidebar: FC<SidebarProps> = ({
     >
       <div className="sidebar-header">
         <div className="logo">
+          <span className="logo-icon" aria-hidden="true">
+            <img className="logo-icon-img" src="/favicon.svg" alt="" />
+          </span>
           <span className="logo-text">Voltuś AI</span>
         </div>
       </div>
