@@ -686,7 +686,7 @@ const ChatPanel: FC<ChatPanelProps> = ({ open, onClose }) => {
         <div className="chat-messages">
           {/* Ziutek animation placeholder */}
           {!hasActivity && (
-            <div className="chat-ziutek-placeholder" style={{ height: '132px' }} />
+            <div className="chat-ziutek-placeholder" style={{ height: '110px' }} />
           )}
 
           {messages.length === 0 && (

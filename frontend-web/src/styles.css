@@ -2276,7 +2276,7 @@ body {
 }
 
 .chat-panel-open {
-    height: min(580px, calc(100% - 20px));
+    height: min(650px, calc(100% - 20px));
     opacity: 1;
     pointer-events: auto;
 }
@@ -2575,7 +2575,7 @@ body {
 /* Ziutek mascot animation */
 .chat-ziutek-absolute {
     position: absolute;
-    top: 77px;
+    top: 55px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 10;
